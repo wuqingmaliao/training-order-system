@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: training-order-system
+    env: node
+    plan: free
+    buildCommand: npm install --legacy-peer-deps && npm run render:build
+    startCommand: node dist/server/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVER_HOST
+        value: 0.0.0.0
+      - key: ADMIN_PASSWORD
+        value: admin123
+      - key: TOKEN_SECRET
+        value: training-order-secret-2024

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: training-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: training_orders
+      POSTGRES_USER: training_user
+      POSTGRES_PASSWORD: training_pass_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U training_user -d training_orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 应用服务
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: training-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 3000
+      SUDA_DATABASE_URL: postgresql://training_user:training_pass_2024@postgres:5432/training_orders
+      ADMIN_PASSWORD: admin123
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - app_logs:/app/logs
+
+volumes:
+  postgres_data:
+    driver: local
+  app_logs:
+    driver: local

@@ -1,0 +1,20 @@
+﻿[Nest] 15888  - 2026/08/10 09:59:15     LOG [NestFactory] Starting Nest application...
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [InstanceLoader] AppModule dependencies initialized +5ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [InstanceLoader] SqliteDatabaseModule dependencies initialized +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [InstanceLoader] ViewModule dependencies initialized +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [InstanceLoader] TrainingOrderModule dependencies initialized +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [Bootstrap] 静态文件目录: D:\29239\ForWork\app\app_17btu6ueem0\dist\client
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RoutesResolver] TrainingOrderController {/api/training-orders}: +2ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/api/training-orders, POST} route +1ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/api/training-orders/export/all, GET} route +1ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/api/training-orders/:id, GET} route +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/api/training-orders, GET} route +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RoutesResolver] AdminAuthController {/api/admin}: +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/api/admin/login, POST} route +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RoutesResolver] ViewController {/}: +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/, GET} route +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [RouterExplorer] Mapped {/*, GET} route +0ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [NestApplication] Nest application successfully started +1ms
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [Bootstrap] Server running on 0.0.0.0:3001
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [Bootstrap] 订单填写: http://localhost:3001
+[Nest] 15888  - 2026/08/10 09:59:15     LOG [Bootstrap] 管理后台: http://localhost:3001/admin/login
