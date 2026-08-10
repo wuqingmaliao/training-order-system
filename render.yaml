@@ -3,7 +3,7 @@ services:
     name: training-order-system
     env: node
     plan: free
-    buildCommand: npm install --legacy-peer-deps && npm run render:build
+    buildCommand: npm install --legacy-peer-deps --include=dev && npm run render:build
     startCommand: node dist/server/main.js
     envVars:
       - key: NODE_ENV
