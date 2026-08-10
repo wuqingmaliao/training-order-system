@@ -3,7 +3,7 @@ node_modules/
 */node_modules/
 
 # Production builds
-dist/
+# dist/  (注释掉，预构建文件需要提交)
 */dist/
 build/
 */build/
