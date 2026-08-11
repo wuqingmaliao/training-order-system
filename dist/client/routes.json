@@ -3,6 +3,18 @@
     "path": "/"
   },
   {
+    "path": "/login"
+  },
+  {
+    "path": "/forgot-password"
+  },
+  {
+    "path": "/register"
+  },
+  {
+    "path": "/my-customers"
+  },
+  {
     "path": "/admin/login"
   },
   {

@@ -1,3 +1,3 @@
-export declare const SQLITE_DB = "SQLITE_DB";
+export declare const DB_TOKEN = "DB_TOKEN";
 export declare class SqliteDatabaseModule {
 }

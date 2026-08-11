@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "node node_modules/@nestjs/cli/bin/nest.js build && node node_modules/vite/bin/vite.js build --config vite.config.ts",
+  "outputDirectory": "dist/client",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 30,
+      "includeFiles": "dist/server/**"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  ]
+}

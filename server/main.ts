@@ -53,24 +53,69 @@ async function bootstrap() {
   // 启用CORS
   app.enableCors();
 
+  // 为所有HTML响应设置no-cache头，防止浏览器缓存旧版本
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/assets/') && !req.path.startsWith('/api/')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    next();
+  });
+
   const clientDir = findClientDir();
   logger.log(`静态文件目录: ${clientDir}`);
 
   // 服务静态资源
-  app.use('/assets', express.static(join(clientDir, 'assets')));
+  // 开发阶段禁止所有缓存，确保浏览器总是获取最新版本
+  app.use('/assets', express.static(join(clientDir, 'assets'), {
+    setHeaders: (res) => {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    },
+  }));
+  // 其他静态文件（index.html等）不缓存，确保每次都获取最新版本
   app.use(express.static(clientDir, {
     index: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    },
   }));
 
   // 注册视图引擎
   app.setBaseViewsDir(clientDir);
   app.setViewEngine('html');
   app.engine('html', hbsExpressEngine);
+  app.disable('view cache');
 
   await app.listen(port, host);
   logger.log(`Server running on ${host}:${port}`);
   logger.log(`订单填写: http://localhost:${port}`);
   logger.log(`管理后台: http://localhost:${port}/admin/login`);
+
+  // 优雅关闭：收到 Ctrl+C 或关闭窗口时，正确释放端口
+  const shutdown = (signal: string) => {
+    logger.log(`收到 ${signal} 信号，正在关闭服务器...`);
+    app.close().then(() => {
+      logger.log('服务器已关闭，端口已释放。');
+      process.exit(0);
+    }).catch((err) => {
+      logger.error('关闭服务器时出错:', err);
+      process.exit(1);
+    });
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  // Windows 下关闭控制台窗口时触发
+  if (process.platform === 'win32') {
+    process.on('SIGHUP', () => shutdown('SIGHUP'));
+  }
 }
 
 bootstrap();

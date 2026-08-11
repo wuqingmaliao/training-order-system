@@ -1,5 +1,28 @@
 {
   "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@client/*": ["client/*"],
+      "@shared/*": ["shared/*"],
+      "@/*": ["./client/src/*"],
+      "@server/*": ["server/*"],
+      "@lark-apaas/client-toolkit/tools/*": ["node_modules/@lark-apaas/client-toolkit/lib/apis/tools/*"]
+    }
+  },
+  "include": [
+    "client/**/*",
+    "server/**/*",
+    "api/**/*",
+    "shared/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "public",
+    "source_package",
+    "client/src/api/gen"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"

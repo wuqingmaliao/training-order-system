@@ -1,85 +1,54 @@
 @echo off
-chcp 65001 >nul
-title 培训订单管理系统 - 一键启动
+chcp 65001 >nul 2>&1
+title 培训订单管理系统
 
-echo =========================================
-echo   培训订单管理系统 - 一键启动脚本
-echo =========================================
+echo ========================================
+echo   培训订单管理系统 启动中...
+echo ========================================
 echo.
 
-:: 检查 Docker 是否安装
-docker --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [错误] 未检测到 Docker，请先安装 Docker Desktop
-    echo.
-    echo 下载地址: https://www.docker.com/products/docker-desktop/
-    echo 安装后重启电脑再运行此脚本
-    echo.
-    pause
-    exit /b 1
+:: 检查并关闭占用3000端口的旧进程
+echo [1/3] 检查端口占用...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":3000 " ^| findstr "LISTENING"') do (
+    echo       发现旧进程 PID: %%a，正在关闭...
+    taskkill /F /PID %%a >nul 2>&1
 )
+echo       端口检查完成。
+echo.
 
-:: 检查 Docker 是否运行
-docker info >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [提示] Docker 未启动，正在启动 Docker Desktop...
-    start "" "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-    echo 等待 Docker 启动中，请稍候...
-    timeout /t 30 /nobreak >nul
+:: 进入项目目录
+cd /d "%~dp0"
+
+:: 检查是否需要构建
+if not exist "dist\server\main.js" (
+    echo [2/3] 首次运行，正在构建项目...
+    call node node_modules\@nestjs\cli\bin\nest.js build
+    call node node_modules\vite\bin\vite.js build --config vite.config.ts
+    echo       构建完成。
+) else (
+    echo [2/3] 项目已构建，跳过构建步骤。
 )
-
-echo [1/4] 检查 Docker Compose...
-docker compose version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [错误] Docker Compose 不可用，请更新 Docker Desktop
-    pause
-    exit /b 1
-)
-echo       Docker Compose 就绪
-
-echo.
-echo [2/4] 构建应用镜像（首次运行需要几分钟）...
-docker compose build
-if %errorlevel% neq 0 (
-    echo.
-    echo [错误] 镜像构建失败，请检查网络连接
-    pause
-    exit /b 1
-)
-
-echo.
-echo [3/4] 启动服务...
-docker compose up -d
-if %errorlevel% neq 0 (
-    echo.
-    echo [错误] 服务启动失败
-    pause
-    exit /b 1
-)
-
-echo.
-echo [4/4] 等待服务就绪...
-timeout /t 10 /nobreak >nul
-
-echo.
-echo =========================================
-echo   ✅ 系统启动成功！
-echo =========================================
-echo.
-echo   客户填写表单: http://localhost:3000
-echo   管理后台登录: http://localhost:3000/admin/login
-echo   管理员密码:   admin123
-echo.
-echo   提示: 把 localhost 换成这台电脑的 IP 地址，
-echo         同一局域网内的其他人就能访问了
-echo.
-echo   查看运行状态: docker compose ps
-echo   停止服务:     双击 stop.bat
-echo.
-echo =========================================
 echo.
 
-:: 自动打开浏览器
-start http://localhost:3000
+:: 启动服务器
+echo [3/3] 启动服务器...
+echo.
+echo ========================================
+echo   系统已启动！
+echo   员工入口: http://localhost:3000
+echo   管理后台: http://localhost:3000/admin/login
+echo   默认管理员: admin / admin123
+echo ========================================
+echo.
+echo 按 Ctrl+C 可停止服务器。
+echo.
 
+set NODE_ENV=production
+set SERVER_HOST=0.0.0.0
+set SERVER_PORT=3000
+node dist/server/main.js
+
+:: 如果服务器异常退出，暂停以便查看错误
+echo.
+echo 服务器已停止。
 pause

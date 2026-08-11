@@ -1,7 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.trainingOrderTable = exports.trainingOrder = void 0;
+exports.trainingOrderTable = exports.trainingOrder = exports.users = void 0;
 const sqlite_core_1 = require("drizzle-orm/sqlite-core");
+exports.users = (0, sqlite_core_1.sqliteTable)('users', {
+    id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+    username: (0, sqlite_core_1.text)('username', { length: 50 }).notNull().unique(),
+    passwordHash: (0, sqlite_core_1.text)('password_hash').notNull(),
+    realName: (0, sqlite_core_1.text)('real_name', { length: 50 }).notNull(),
+    role: (0, sqlite_core_1.text)('role', { length: 20 }).notNull().default('staff'),
+    isActive: (0, sqlite_core_1.integer)('is_active', { mode: 'boolean' }).notNull().default(true),
+    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+});
 exports.trainingOrder = (0, sqlite_core_1.sqliteTable)('training_order', {
     id: (0, sqlite_core_1.text)('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
     orderNo: (0, sqlite_core_1.text)('order_no', { length: 32 }).notNull().unique(),
@@ -21,7 +30,9 @@ exports.trainingOrder = (0, sqlite_core_1.sqliteTable)('training_order', {
     signDate: (0, sqlite_core_1.text)('sign_date'),
     promisedStudent: (0, sqlite_core_1.text)('promised_student', { length: 100 }).notNull().default(''),
     referrer: (0, sqlite_core_1.text)('referrer', { length: 100 }).notNull().default(''),
-    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+    userId: (0, sqlite_core_1.text)('user_id').references(() => exports.users.id),
+    createdByName: (0, sqlite_core_1.text)('created_by_name', { length: 50 }).notNull().default(''),
+    createdAt: (0, sqlite_core_1.integer)('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+    updatedAt: (0, sqlite_core_1.integer)('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
 });
 exports.trainingOrderTable = exports.trainingOrder;

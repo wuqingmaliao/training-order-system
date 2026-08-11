@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Shield } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff, User, Lock, Shield } from 'lucide-react';
 
 import { Button } from '@client/src/components/ui/button';
 import {
@@ -17,10 +16,11 @@ import {
 } from '@client/src/components/ui/form';
 import { Input } from '@client/src/components/ui/input';
 import { Card, CardContent, CardHeader } from '@client/src/components/ui/card';
-import { trainingOrders, adminAuth } from '@client/src/api';
+import { authApi } from '@client/src/api';
 
 const loginSchema = z.object({
-  password: z.string().min(1, '请输入管理员密码'),
+  username: z.string().min(1, '请输入用户名'),
+  password: z.string().min(1, '请输入密码'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -33,28 +33,28 @@ const AdminLoginPage = () => {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { password: '' },
+    defaultValues: { username: 'admin', password: '' },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setLoggingIn(true);
     setLoginError('');
     try {
-      const result = await adminAuth.adminLogin({ password: data.password });
-      if (result.success && result.token) {
-        trainingOrders.setAdminToken(result.token);
-        navigate('/admin');
+      const result = await authApi.login({ username: data.username, password: data.password });
+      if (result.success) {
+        if (result.user.role === 'admin') {
+          navigate('/admin', { replace: true });
+          return;
+        } else {
+          setLoginError('该账号不是管理员');
+          authApi.logout();
+        }
       } else {
-        setLoginError('密码错误，请重试');
+        setLoginError('登录失败，请重试');
       }
     } catch (error: any) {
-      logger.error('登录失败', error);
-      const status = error?.response?.status;
-      if (status === 401) {
-        setLoginError('密码错误，请重试');
-      } else {
-        setLoginError('登录失败，请稍后重试');
-      }
+      const message = error?.response?.data?.message || error?.message || '登录失败';
+      setLoginError(message);
     } finally {
       setLoggingIn(false);
     }
@@ -75,16 +75,33 @@ const AdminLoginPage = () => {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>管理员账号</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input placeholder="请输入管理员账号" className="pl-9" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>管理员密码</FormLabel>
+                    <FormLabel>密码</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                         <Input
                           type={showPassword ? 'text' : 'password'}
-                          placeholder="请输入管理员密码"
+                          placeholder="请输入密码"
                           className="pl-9 pr-10"
                           autoFocus
                           {...field}
@@ -92,14 +109,10 @@ const AdminLoginPage = () => {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                           tabIndex={-1}
                         >
-                          {showPassword ? (
-                            <EyeOff className="size-4" />
-                          ) : (
-                            <Eye className="size-4" />
-                          )}
+                          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                         </button>
                       </div>
                     </FormControl>
@@ -116,9 +129,17 @@ const AdminLoginPage = () => {
                 {loggingIn ? '登录中...' : '登录'}
               </Button>
 
-              <p className="text-xs text-muted-foreground text-center pt-2">
-                管理员专用入口，请勿泄露密码
+              <p className="text-xs text-muted-foreground text-center">
+                默认账号：admin / admin123
               </p>
+              <div className="flex items-center justify-center gap-4 text-xs">
+                <Link to="/forgot-password?type=admin" className="text-muted-foreground hover:text-foreground">
+                  忘记密码
+                </Link>
+                <Link to="/login" className="text-muted-foreground hover:text-foreground">
+                  员工登录入口
+                </Link>
+              </div>
             </form>
           </Form>
         </CardContent>

@@ -1,5 +1,14 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  username: text('username', { length: 50 }).notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  realName: text('real_name', { length: 50 }).notNull(),
+  role: text('role', { length: 20 }).notNull().default('staff'),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+});
 
 export const trainingOrder = sqliteTable('training_order', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -20,8 +29,10 @@ export const trainingOrder = sqliteTable('training_order', {
   signDate: text('sign_date'),
   promisedStudent: text('promised_student', { length: 100 }).notNull().default(''),
   referrer: text('referrer', { length: 100 }).notNull().default(''),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
-  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  userId: text('user_id').references(() => users.id),
+  createdByName: text('created_by_name', { length: 50 }).notNull().default(''),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
 });
 
 export const trainingOrderTable = trainingOrder;

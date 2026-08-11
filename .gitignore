@@ -3,13 +3,18 @@ node_modules/
 */node_modules/
 
 # Production builds
-# dist/  (注释掉，预构建文件需要提交)
+dist/
 */dist/
 build/
 */build/
 
+# SQLite database
+data/
+
 # Environment files
-.env.local
+.env
+.env.*
+!.env.example
 
 # Logs
 npm-debug.log*

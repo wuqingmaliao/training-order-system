@@ -1,90 +1,68 @@
 import type {
   CreateTrainingOrderRequest,
   CreateTrainingOrderResponse,
+  UpdateTrainingOrderRequest,
   TrainingOrderListParams,
   TrainingOrderListResponse,
   TrainingOrder,
-  AdminLoginRequest,
-  AdminLoginResponse,
   TrainingOrderExportParams,
   TrainingOrderExportResponse,
+  OrderStats,
 } from '@shared/api.interface';
-import { logger } from '@lark-apaas/client-toolkit/logger';
-import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { request } from './auth';
 
-const ADMIN_TOKEN_KEY = 'admin_token';
-
-export function getAdminToken(): string | null {
-  return localStorage.getItem(ADMIN_TOKEN_KEY);
-}
-
-export function setAdminToken(token: string): void {
-  localStorage.setItem(ADMIN_TOKEN_KEY, token);
-}
-
-export function clearAdminToken(): void {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
-}
-
-function getAuthHeaders(): Record<string, string> {
-  const token = getAdminToken();
-  return token ? { 'X-Admin-Token': token } : {};
+function buildQuery(params: Record<string, any>): string {
+  const sp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') sp.append(k, String(v));
+  });
+  const qs = sp.toString();
+  return qs ? `?${qs}` : '';
 }
 
 export async function createOrder(
   data: CreateTrainingOrderRequest,
 ): Promise<CreateTrainingOrderResponse> {
-  try {
-    const response = await axiosForBackend.post(
-      '/api/training-orders',
-      data,
-    );
-    return response.data;
-  } catch (error) {
-    logger.error('创建订单失败', error);
-    throw error;
-  }
+  return request<CreateTrainingOrderResponse>('/api/training-orders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function getOrderList(
   params: TrainingOrderListParams,
 ): Promise<TrainingOrderListResponse> {
-  try {
-    const response = await axiosForBackend.get('/api/training-orders', {
-      params,
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    logger.error('获取订单列表失败', error);
-    throw error;
-  }
+  return request<TrainingOrderListResponse>(`/api/training-orders${buildQuery(params)}`);
 }
 
 export async function getOrderDetail(id: string): Promise<TrainingOrder> {
-  try {
-    const response = await axiosForBackend.get(
-      `/api/training-orders/${id}`,
-      { headers: getAuthHeaders() },
-    );
-    return response.data;
-  } catch (error) {
-    logger.error('获取订单详情失败', error);
-    throw error;
-  }
+  return request<TrainingOrder>(`/api/training-orders/${id}`);
+}
+
+export async function updateOrder(
+  id: string,
+  data: UpdateTrainingOrderRequest,
+): Promise<TrainingOrder> {
+  return request<TrainingOrder>(`/api/training-orders/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteOrder(id: string): Promise<void> {
+  await request(`/api/training-orders/${id}`, { method: 'DELETE' });
 }
 
 export async function exportOrders(
   params: TrainingOrderExportParams,
 ): Promise<TrainingOrderExportResponse> {
-  try {
-    const response = await axiosForBackend.get(
-      '/api/training-orders/export/all',
-      { params, headers: getAuthHeaders() },
-    );
-    return response.data;
-  } catch (error) {
-    logger.error('导出订单失败', error);
-    throw error;
-  }
+  return request<TrainingOrderExportResponse>(`/api/training-orders/export/all${buildQuery(params)}`);
+}
+
+export async function getStats(params?: {
+  startDate?: string;
+  endDate?: string;
+  userId?: string;
+}): Promise<OrderStats> {
+  return request<OrderStats>(`/api/training-orders/stats${params ? buildQuery(params) : ''}`);
 }
