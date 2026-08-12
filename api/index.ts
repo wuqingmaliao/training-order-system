@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
@@ -5,6 +6,14 @@ import { VercelAppModule } from '../server/vercel-app.module';
 
 let cachedServer: any;
 let initError: any = null;
+
+// 捕获未处理的异步错误
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+});
 
 async function bootstrap() {
   if (cachedServer) return cachedServer;
