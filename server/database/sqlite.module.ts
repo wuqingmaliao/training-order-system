@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as path from 'path';
@@ -95,6 +95,7 @@ if (!adminExists) {
 
 const db = drizzle(sqlite);
 
+@Global()
 @Module({
   providers: [
     {

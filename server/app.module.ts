@@ -5,15 +5,15 @@ import { GlobalExceptionFilter } from './common/filters/exception.filter';
 import { TrainingOrderModule } from './modules/training-order/training-order.module';
 import { UserModule } from './modules/user/user.module';
 import { ViewModule } from './modules/view/view.module';
+import { DatabaseRootModule } from './database/database.module';
 
-// Vercel 环境下不需要 ViewModule（前端由 Vercel 静态文件服务处理）
-const isVercel = !!process.env.VERCEL || !!process.env.DATABASE_URL;
-
+// 本地开发用 AppModule（Vercel 使用 vercel-app.module.ts）
 @Module({
   imports: [
+    DatabaseRootModule,
     TrainingOrderModule,
     UserModule,
-    ...(isVercel ? [] : [ViewModule]),
+    ViewModule,
   ],
   providers: [
     {

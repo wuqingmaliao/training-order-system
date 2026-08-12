@@ -10,12 +10,10 @@ async function bootstrap() {
   if (initError) throw initError;
 
   try {
-    // 动态 require，避免 Vercel 打包时静态分析到 better-sqlite3
-    const appModulePath = '../server/app.module';
-    const { AppModule } = require(appModulePath);
+    const { VercelAppModule } = require('../server/vercel-app.module');
 
     const expressApp = express();
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
+    const app = await NestFactory.create(VercelAppModule, new ExpressAdapter(expressApp), {
       logger: ['error', 'warn', 'log'],
     });
     await app.init();
