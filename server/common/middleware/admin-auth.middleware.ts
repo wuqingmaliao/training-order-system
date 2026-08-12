@@ -6,8 +6,7 @@ import {
 import type { Request, Response, NextFunction } from 'express';
 import * as CryptoJS from 'crypto-js';
 
-import { getAdminPassword as resolveAdminPassword } from '../admin-password';
-
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 const TOKEN_SECRET = process.env.TOKEN_SECRET || 'training-order-secret';
 const TOKEN_EXPIRE_HOURS = 24;
 
@@ -42,7 +41,7 @@ export function verifyAdminToken(token: string): boolean {
 }
 
 export function getAdminPassword(): string {
-  return resolveAdminPassword();
+  return ADMIN_PASSWORD;
 }
 
 @Injectable()

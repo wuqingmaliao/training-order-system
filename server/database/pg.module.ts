@@ -4,7 +4,6 @@ import { sql } from 'drizzle-orm';
 import { Pool } from 'pg';
 import * as schema from './pg-schema';
 import { DB_TOKEN } from './token';
-import { getAdminPassword } from '../common/admin-password';
 export type PgDatabase = ReturnType<typeof drizzle<typeof schema>>;
 
 // Vercel Serverless 环境下复用连接
@@ -44,7 +43,7 @@ function getDb(): PgDatabase {
           if (adminResult.rows.length === 0) {
             const crypto = require('crypto');
             const salt = crypto.randomBytes(16).toString('hex');
-            const hash = crypto.pbkdf2Sync(getAdminPassword(), salt, 10000, 64, 'sha512').toString('hex');
+            const hash = crypto.pbkdf2Sync('admin123', salt, 10000, 64, 'sha512').toString('hex');
             const adminId = crypto.randomUUID();
             await db.execute(sql`
               INSERT INTO users (id, username, password_hash, real_name, role, is_active)
