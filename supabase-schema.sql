@@ -52,14 +52,6 @@ CREATE INDEX IF NOT EXISTS idx_training_order_sign_date ON training_order(sign_d
 CREATE INDEX IF NOT EXISTS idx_training_order_created_at ON training_order(created_at);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
--- 默认管理员账号 (用户名: admin, 密码: admin123)
-INSERT INTO users (id, username, password_hash, real_name, role, is_active)
-VALUES (
-  gen_random_uuid()::text,
-  'admin',
-  '8a93749e94db81b7df4bee03349eb79e:e136f926a19e7995c370c1cbd25f5d0a2a34cd087f2826fa716b56adff55d84928156a8c5befd05ea1cae254d8a3567bada1d296601fa72bcfb30558e95e59e2',
-  '管理员',
-  'admin',
-  TRUE
-)
-ON CONFLICT (username) DO NOTHING;
+-- 管理员账号由应用首次启动时自动创建
+-- 密码通过 ADMIN_PASSWORD 环境变量设置，未设置则随机生成（查看 Vercel Logs）
+-- INSERT INTO users ... （已由应用自动处理，无需手动插入）

@@ -129,9 +129,6 @@ const AdminLoginPage = () => {
                 {loggingIn ? '登录中...' : '登录'}
               </Button>
 
-              <p className="text-xs text-muted-foreground text-center">
-                默认账号：admin / admin123
-              </p>
               <div className="flex items-center justify-center gap-4 text-xs">
                 <Link to="/forgot-password?type=admin" className="text-muted-foreground hover:text-foreground">
                   忘记密码

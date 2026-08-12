@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import { DB_TOKEN } from './token';
+import { getAdminPassword } from '../common/admin-password';
 
 const dbPath = process.env.SQLITE_DB_PATH || path.join(process.cwd(), 'data', 'training.db');
 
@@ -85,7 +86,7 @@ const adminExists = sqlite.prepare("SELECT id FROM users WHERE username = 'admin
 if (!adminExists) {
   const crypto = require('crypto');
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync('admin123', salt, 10000, 64, 'sha512').toString('hex');
+  const hash = crypto.pbkdf2Sync(getAdminPassword(), salt, 10000, 64, 'sha512').toString('hex');
   const adminId = crypto.randomUUID();
   const now = Date.now();
   sqlite.prepare(
