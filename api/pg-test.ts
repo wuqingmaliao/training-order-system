@@ -1,8 +1,10 @@
 const { Pool } = require('pg');
 
 export default async function handler(req: any, res: any) {
-  // 连接池地址（IPv4）
-  const connectionString = 'postgresql://postgres.jynhabpdjjpkadoajag:123..lqwlqw..@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    return res.status(500).json({ error: 'DATABASE_URL not set' });
+  }
 
   try {
     const pool = new Pool({
