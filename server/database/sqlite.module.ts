@@ -4,7 +4,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as path from 'path';
 import * as fs from 'fs';
 
-export const DB_TOKEN = 'DB_TOKEN';
+import { DB_TOKEN } from './token';
 
 const dbPath = process.env.SQLITE_DB_PATH || path.join(process.cwd(), 'data', 'training.db');
 

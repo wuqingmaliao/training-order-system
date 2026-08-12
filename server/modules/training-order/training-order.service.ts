@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { eq, and, like, or, desc, gte, lte, sql } from 'drizzle-orm';
 import { trainingOrder, users } from '../../database/schema';
-import { DB_TOKEN } from '../../database/sqlite.module';
+import { DB_TOKEN } from '../../database/token';
 import { $await } from '../../database/db-helper';
 import type { TokenPayload } from '../../common/auth';
 import type {

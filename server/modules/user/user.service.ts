@@ -1,7 +1,7 @@
 import { Inject, Injectable, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { users } from '../../database/schema';
-import { DB_TOKEN } from '../../database/sqlite.module';
+import { DB_TOKEN } from '../../database/token';
 import { $await } from '../../database/db-helper';
 import { hashPassword, verifyPassword, generateToken } from '../../common/auth';
 import type { RegisterRequest, LoginRequest, AuthResponse, User, ResetPasswordRequest } from '@shared/api.interface';

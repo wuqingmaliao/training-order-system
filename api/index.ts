@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+import { VercelAppModule } from '../server/vercel-app.module';
 
 let cachedServer: any;
 let initError: any = null;
@@ -10,8 +11,6 @@ async function bootstrap() {
   if (initError) throw initError;
 
   try {
-    const { VercelAppModule } = require('../server/vercel-app.module');
-
     const expressApp = express();
     const app = await NestFactory.create(VercelAppModule, new ExpressAdapter(expressApp), {
       logger: ['error', 'warn', 'log'],

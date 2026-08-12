@@ -3,8 +3,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
 import postgres from 'postgres';
 import * as schema from './pg-schema';
-
-export const DB_TOKEN = 'DB_TOKEN';
+import { DB_TOKEN } from './token';
 export type PgDatabase = ReturnType<typeof drizzle<typeof schema>>;
 
 // Vercel Serverless 环境下复用连接
