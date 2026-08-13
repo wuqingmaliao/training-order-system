@@ -6,8 +6,8 @@ import type {
   TrainingOrderListResponse,
   TrainingOrder,
   TrainingOrderExportParams,
-  TrainingOrderExportResponse,
   OrderStats,
+  ProjectOptionsResponse,
 } from '@shared/api.interface';
 import { request } from './auth';
 
@@ -55,8 +55,8 @@ export async function deleteOrder(id: string): Promise<void> {
 
 export async function exportOrders(
   params: TrainingOrderExportParams,
-): Promise<TrainingOrderExportResponse> {
-  return request<TrainingOrderExportResponse>(`/api/training-orders/export/all${buildQuery(params)}`);
+): Promise<{ items: TrainingOrder[] }> {
+  return request<{ items: TrainingOrder[] }>(`/api/training-orders/export/all${buildQuery(params)}`);
 }
 
 export async function getStats(params?: {
@@ -65,4 +65,15 @@ export async function getStats(params?: {
   userId?: string;
 }): Promise<OrderStats> {
   return request<OrderStats>(`/api/training-orders/stats${params ? buildQuery(params) : ''}`);
+}
+
+export async function getProjectOptions(): Promise<ProjectOptionsResponse> {
+  return request<ProjectOptionsResponse>('/api/training-orders/project-options');
+}
+
+export async function updateProjectOptions(options: string[]): Promise<ProjectOptionsResponse> {
+  return request<ProjectOptionsResponse>('/api/training-orders/project-options', {
+    method: 'PUT',
+    body: JSON.stringify({ options }),
+  });
 }

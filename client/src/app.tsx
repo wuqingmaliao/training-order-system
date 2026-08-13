@@ -1,42 +1,79 @@
-import React from 'react';
-import { Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage/LandingPage';
 import LoginPage from './pages/LoginPage/LoginPage';
-import RegisterPage from './pages/RegisterPage/RegisterPage';
 import MyOrdersPage from './pages/MyOrdersPage/MyOrdersPage';
 import AdminLoginPage from './pages/AdminLoginPage/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage/AdminDashboardPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage/ForgotPasswordPage';
 import NotFound from './pages/NotFound/NotFound';
 import { authApi } from './api';
 
-const RequireAuth = ({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) => {
-  if (!authApi.isLoggedIn()) {
-    return <Navigate to={adminOnly ? '/admin/login' : '/login'} replace />;
-  }
-  if (adminOnly && !authApi.isAdmin()) {
+// 登录守卫：已登录用户不能访问登录页
+const LoginGuard = ({ children }: { children: React.ReactNode }) => {
+  if (authApi.isLoggedIn()) {
+    const user = authApi.getCurrentUser();
+    if (user?.role === 'super_admin' || user?.role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    }
     return <Navigate to="/my-customers" replace />;
   }
   return <>{children}</>;
 };
 
-const RoutesComponent = () => {
-  return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<LandingPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="register" element={<RegisterPage />} />
-        <Route path="my-customers" element={<RequireAuth><MyOrdersPage /></RequireAuth>} />
-        <Route path="admin/login" element={<AdminLoginPage />} />
-        <Route path="admin" element={<RequireAuth adminOnly><AdminDashboardPage /></RequireAuth>} />
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
+// 员工页面守卫
+const RequireAuth = ({ children }: { children: React.ReactNode }) => {
+  if (!authApi.isLoggedIn()) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
 };
 
-export default RoutesComponent;
+// 管理员页面守卫（super_admin 和 admin 都可以进入）
+const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
+  if (!authApi.isLoggedIn()) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  const user = authApi.getCurrentUser();
+  if (user?.role !== 'super_admin' && user?.role !== 'admin') {
+    return <Navigate to="/my-customers" replace />;
+  }
+  return <>{children}</>;
+};
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Toaster position="top-center" richColors />
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={
+            <LoginGuard>
+              <LandingPage />
+            </LoginGuard>
+          } />
+          <Route path="login" element={<LoginPage />} />
+          <Route path="my-customers" element={
+            <RequireAuth>
+              <MyOrdersPage />
+            </RequireAuth>
+          } />
+          <Route path="admin/login" element={
+            <LoginGuard>
+              <AdminLoginPage />
+            </LoginGuard>
+          } />
+          <Route path="admin" element={
+            <RequireAdmin>
+              <AdminDashboardPage />
+            </RequireAdmin>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

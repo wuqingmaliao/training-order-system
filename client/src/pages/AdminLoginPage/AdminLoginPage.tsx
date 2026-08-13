@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, User, Lock, Shield } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Shield, ArrowLeft } from 'lucide-react';
 
 import { Button } from '@client/src/components/ui/button';
 import {
@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader } from '@client/src/components/ui/card';
 import { authApi } from '@client/src/api';
 
 const loginSchema = z.object({
-  username: z.string().min(1, '请输入用户名'),
+  username: z.string().min(1, '请输入账号'),
   password: z.string().min(1, '请输入密码'),
 });
 
@@ -33,7 +33,7 @@ const AdminLoginPage = () => {
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: 'admin', password: '' },
+    defaultValues: { username: '', password: '' },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -42,9 +42,8 @@ const AdminLoginPage = () => {
     try {
       const result = await authApi.login({ username: data.username, password: data.password });
       if (result.success) {
-        if (result.user.role === 'admin') {
+        if (result.user.role === 'super_admin' || result.user.role === 'admin') {
           navigate('/admin', { replace: true });
-          return;
         } else {
           setLoginError('该账号不是管理员');
           authApi.logout();
@@ -53,7 +52,7 @@ const AdminLoginPage = () => {
         setLoginError('登录失败，请重试');
       }
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || '登录失败';
+      const message = error?.message || '登录失败';
       setLoginError(message);
     } finally {
       setLoggingIn(false);
@@ -61,7 +60,15 @@ const AdminLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative">
+      <Link
+        to="/"
+        className="absolute top-4 left-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-md hover:bg-accent"
+      >
+        <ArrowLeft className="size-4" />
+        返回员工登录
+      </Link>
+
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-3">
@@ -128,15 +135,6 @@ const AdminLoginPage = () => {
               <Button type="submit" className="w-full" disabled={loggingIn}>
                 {loggingIn ? '登录中...' : '登录'}
               </Button>
-
-              <div className="flex items-center justify-center gap-4 text-xs">
-                <Link to="/forgot-password?type=admin" className="text-muted-foreground hover:text-foreground">
-                  忘记密码
-                </Link>
-                <Link to="/login" className="text-muted-foreground hover:text-foreground">
-                  员工登录入口
-                </Link>
-              </div>
             </form>
           </Form>
         </CardContent>

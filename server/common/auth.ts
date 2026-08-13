@@ -7,7 +7,8 @@ export interface TokenPayload {
   userId: string;
   username: string;
   realName: string;
-  role: 'admin' | 'staff';
+  role: 'super_admin' | 'admin' | 'staff';
+  team?: string;
   expiresAt: number;
 }
 

@@ -6,6 +6,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash').notNull(),
   realName: text('real_name').notNull(),
   role: text('role').notNull().default('staff'),
+  team: text('team').notNull().default(''),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -13,7 +14,13 @@ export const users = pgTable('users', {
 export const trainingOrder = pgTable('training_order', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   orderNo: text('order_no').notNull().unique(),
-  trainingType: text('training_type').notNull(),
+  // 新字段
+  businessType: text('business_type').notNull().default(''),
+  isSigned: boolean('is_signed').notNull().default(false),
+  isPaid: boolean('is_paid').notNull().default(false),
+  remark: text('remark').notNull().default(''),
+  // 旧字段（保留兼容）
+  trainingType: text('training_type').notNull().default(''),
   customerSource: text('customer_source').notNull().default(''),
   contractStatus: text('contract_status').notNull().default('未签约'),
   studentName: text('student_name').notNull(),
@@ -33,6 +40,11 @@ export const trainingOrder = pgTable('training_order', {
   createdByName: text('created_by_name').notNull().default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const systemSettings = pgTable('system_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
 });
 
 export const trainingOrderTable = trainingOrder;

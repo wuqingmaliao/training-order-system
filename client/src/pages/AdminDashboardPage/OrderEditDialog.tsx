@@ -9,6 +9,7 @@ import {
 } from '@client/src/components/ui/form';
 import { Input } from '@client/src/components/ui/input';
 import { Textarea } from '@client/src/components/ui/textarea';
+import { Switch } from '@client/src/components/ui/switch';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@client/src/components/ui/select';
@@ -16,12 +17,14 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@client/src/components/ui/dialog';
 import { ScrollArea } from '@client/src/components/ui/scroll-area';
-import { trainingOrders, authApi } from '@client/src/api';
+import { trainingOrders } from '@client/src/api';
+import type { TrainingOrder } from '@shared/api.interface';
 import { toast } from 'sonner';
 
 const BUSINESS_TYPE_OPTIONS = ['资质-挂靠', '学历', '培训', '非培训'];
 
 const orderSchema = z.object({
+  createdAt: z.string().min(1, '请选择时间'),
   studentName: z.string().min(1, '请输入学员姓名'),
   idCard: z.string().min(1, '请输入身份证号码'),
   phone: z.string().min(1, '请输入手机号'),
@@ -30,76 +33,79 @@ const orderSchema = z.object({
   classMajor: z.string().min(1, '请输入班次类别'),
   actualPayment: z.coerce.number().min(0, '请输入收款金额'),
   discountedPrice: z.coerce.number().min(0, '请输入折后业绩'),
+  personInCharge: z.string().min(1, '请输入对接老师'),
   remainingAmount: z.coerce.number().min(0, '请输入尾款'),
+  isSigned: z.boolean(),
+  isPaid: z.boolean(),
   remark: z.string().optional(),
 });
 
 type OrderFormData = z.infer<typeof orderSchema>;
 
-interface OrderFormDialogProps {
+interface OrderEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  order: TrainingOrder | null;
   onSuccess: () => void;
 }
 
-const todayStr = () => {
-  const d = new Date();
-  return d.getFullYear() + '-' +
-    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-    String(d.getDate()).padStart(2, '0');
+const toDatetimeLocal = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps) => {
+const OrderEditDialog = ({ open, onOpenChange, order, onSuccess }: OrderEditDialogProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [projectOptions, setProjectOptions] = useState<string[]>([]);
-  const user = authApi.getCurrentUser();
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
-      studentName: '', idCard: '', phone: '', businessType: '',
-      examProject: '', classMajor: '',
-      actualPayment: 0, discountedPrice: 0, remainingAmount: 0,
-      remark: '',
+      createdAt: '', studentName: '', idCard: '', phone: '',
+      businessType: '', examProject: '', classMajor: '',
+      actualPayment: 0, discountedPrice: 0, personInCharge: '',
+      remainingAmount: 0, isSigned: false, isPaid: false, remark: '',
     },
   });
 
   useEffect(() => {
-    if (open) {
+    if (open && order) {
       form.reset({
-        studentName: '', idCard: '', phone: '', businessType: '',
-        examProject: '', classMajor: '',
-        actualPayment: 0, discountedPrice: 0, remainingAmount: 0,
-        remark: '',
+        createdAt: toDatetimeLocal(order.createdAt),
+        studentName: order.studentName,
+        idCard: order.idCard,
+        phone: order.phone,
+        businessType: order.businessType,
+        examProject: order.examProject,
+        classMajor: order.classMajor,
+        actualPayment: order.actualPayment,
+        discountedPrice: order.discountedPrice,
+        personInCharge: order.personInCharge,
+        remainingAmount: order.remainingAmount,
+        isSigned: order.isSigned,
+        isPaid: order.isPaid,
+        remark: order.remark || '',
       });
       trainingOrders.getProjectOptions().then(res => {
         setProjectOptions(res.options || []);
-      }).catch(() => {
-        setProjectOptions([]);
-      });
+      }).catch(() => setProjectOptions([]));
     }
-  }, [open]);
+  }, [open, order]);
 
   const onSubmit = async (data: OrderFormData) => {
+    if (!order) return;
     setSubmitting(true);
     try {
-      await trainingOrders.createOrder({
-        studentName: data.studentName,
-        idCard: data.idCard,
-        phone: data.phone,
-        businessType: data.businessType,
-        examProject: data.examProject,
-        classMajor: data.classMajor,
-        actualPayment: data.actualPayment,
-        discountedPrice: data.discountedPrice,
-        remainingAmount: data.remainingAmount,
-        remark: data.remark || '',
+      await trainingOrders.updateOrder(order.id, {
+        ...data,
+        createdAt: new Date(data.createdAt).toISOString(),
       });
-      toast('下单成功');
+      toast('修改成功');
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
-      toast(error?.message || '下单失败');
+      toast(error?.message || '修改失败');
     } finally {
       setSubmitting(false);
     }
@@ -109,25 +115,28 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle>新增订单</DialogTitle>
+          <DialogTitle>编辑订单 - {order?.orderNo}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-140px)] px-6 pb-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* 时间（只读） */}
-              <FormItem>
-                <FormLabel>时间</FormLabel>
-                <FormControl>
-                  <Input value={todayStr()} disabled className="bg-muted" />
-                </FormControl>
-              </FormItem>
+              <FormField
+                control={form.control} name="createdAt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>时间 <span className="text-destructive">*</span></FormLabel>
+                    <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control} name="studentName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>学员姓名 <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><Input placeholder="请输入学员姓名" {...field} /></FormControl>
+                    <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -139,7 +148,7 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>身份证号码 <span className="text-destructive">*</span></FormLabel>
-                      <FormControl><Input placeholder="请输入身份证号码" {...field} /></FormControl>
+                      <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -149,7 +158,7 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>手机号 <span className="text-destructive">*</span></FormLabel>
-                      <FormControl><Input placeholder="请输入手机号" {...field} /></FormControl>
+                      <FormControl><Input {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -178,11 +187,9 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
                     <FormItem>
                       <FormLabel>项目 <span className="text-destructive">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="请选择项目" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {projectOptions.length === 0 ? (
-                            <SelectItem value="__empty" disabled>暂无选项</SelectItem>
-                          ) : projectOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                          {projectOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -196,7 +203,7 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>班次类别 <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><Input placeholder="请输入班次类别" {...field} /></FormControl>
+                    <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -208,7 +215,7 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>收款（元） <span className="text-destructive">*</span></FormLabel>
-                      <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} className="font-mono" /></FormControl>
+                      <FormControl><Input type="number" step="0.01" {...field} className="font-mono" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -218,38 +225,66 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>折后业绩（元） <span className="text-destructive">*</span></FormLabel>
-                      <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} className="font-mono" /></FormControl>
+                      <FormControl><Input type="number" step="0.01" {...field} className="font-mono" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              {/* 对接老师（只读） */}
-              <FormItem>
-                <FormLabel>对接老师（负责人）</FormLabel>
-                <FormControl>
-                  <Input value={user?.realName || user?.username || ''} disabled className="bg-muted" />
-                </FormControl>
-              </FormItem>
-
               <FormField
-                control={form.control} name="remainingAmount"
+                control={form.control} name="personInCharge"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>尾款（元） <span className="text-destructive">*</span></FormLabel>
-                    <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} className="font-mono" /></FormControl>
+                    <FormLabel>对接老师（负责人） <span className="text-destructive">*</span></FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
               <FormField
+                control={form.control} name="remainingAmount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>尾款（元） <span className="text-destructive">*</span></FormLabel>
+                    <FormControl><Input type="number" step="0.01" {...field} className="font-mono" /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4 py-2">
+                <FormField
+                  control={form.control} name="isSigned"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="!mt-0">是否签约</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control} name="isPaid"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                      <FormLabel className="!mt-0">是否回款</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
                 control={form.control} name="remark"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>备注</FormLabel>
-                    <FormControl><Textarea placeholder="选填" rows={3} {...field} /></FormControl>
+                    <FormControl><Textarea rows={3} {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -258,7 +293,7 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
               <div className="flex justify-end gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? '提交中...' : '确认下单'}
+                  {submitting ? '保存中...' : '保存修改'}
                 </Button>
               </div>
             </form>
@@ -269,4 +304,4 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess }: OrderFormDialogProps
   );
 };
 
-export default OrderFormDialog;
+export default OrderEditDialog;
