@@ -1,7 +1,7 @@
 {
   "version": 2,
   "installCommand": "npm install --legacy-peer-deps --include=dev",
-  "buildCommand": "node node_modules/vite/bin/vite.js build --config vite.config.ts && node scripts/post-build.cjs",
+  "buildCommand": "node node_modules/vite/bin/vite.js build --config vite.config.ts",
   "outputDirectory": "dist/client",
   "functions": {
     "api/*.ts": {
