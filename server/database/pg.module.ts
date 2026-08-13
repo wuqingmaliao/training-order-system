@@ -109,6 +109,23 @@ async function initDatabase(db: PgDatabase) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN team TEXT NOT NULL DEFAULT ''`);
   }
 
+  // 修复旧表缺少 DEFAULT 值的 NOT NULL 列（线上旧表可能在建表时未设默认值）
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN training_type SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN customer_source SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN contract_status SET DEFAULT '未签约'`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN original_price SET DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN promised_student SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN referrer SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN id_card SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN phone SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN exam_project SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN class_major SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN actual_payment SET DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN discounted_price SET DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN remaining_amount SET DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN person_in_charge SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN created_by_name SET DEFAULT ''`);
+
   // 索引
   await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_training_order_user_id ON training_order(user_id)`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_training_order_student_name ON training_order(student_name)`);

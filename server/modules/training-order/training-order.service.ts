@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { and, eq, like, or, gte, lte, sql, desc, SQL } from 'drizzle-orm';
+import { and, eq, like, or, gte, lte, sql, desc, inArray, SQL } from 'drizzle-orm';
 import { trainingOrder, users, systemSettings } from '../../database/schema';
 import { DB_TOKEN } from '../../database/token';
 import { $await } from '../../database/db-helper';
@@ -126,6 +126,13 @@ export class TrainingOrderService {
           isSigned: false,
           isPaid: false,
           remark: data.remark || '',
+          // 旧字段显式赋值，避免线上旧表缺少 DEFAULT 约束导致 NOT NULL 违规
+          trainingType: '',
+          customerSource: '',
+          contractStatus: '未签约',
+          originalPrice: 0,
+          promisedStudent: '',
+          referrer: '',
           studentName: data.studentName.trim(),
           idCard: data.idCard.trim(),
           phone: data.phone.trim(),
@@ -172,11 +179,11 @@ export class TrainingOrderService {
     }
 
     if (params.isSigned !== undefined && params.isSigned !== '') {
-      conditions.push(eq(trainingOrder.isSigned, params.isSigned === 'true' ? 1 : true));
+      conditions.push(eq(trainingOrder.isSigned, params.isSigned === 'true'));
     }
 
     if (params.isPaid !== undefined && params.isPaid !== '') {
-      conditions.push(eq(trainingOrder.isPaid, params.isPaid === 'true' ? 1 : true));
+      conditions.push(eq(trainingOrder.isPaid, params.isPaid === 'true'));
     }
 
     if (params.startDate) {
@@ -440,9 +447,8 @@ export class TrainingOrderService {
         this.db
           .select({ id: users.id, team: users.team, realName: users.realName })
           .from(users)
-          .where(sql`${users.id} IN (${userIds.map(() => sql`?`).join(',')})`)
+          .where(inArray(users.id, userIds))
       );
-      // 上面的in查询可能有问题，用简单方式
       for (const s of staffMap.values()) {
         if (s.userId) {
           const u = userResults.find((ur: any) => ur.id === s.userId);
