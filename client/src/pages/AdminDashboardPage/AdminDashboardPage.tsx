@@ -315,36 +315,39 @@ const AdminDashboardPage = () => {
                     <TableRow>
                       <TableHead>时间</TableHead>
                       <TableHead>学员姓名</TableHead>
+                      <TableHead>身份证号</TableHead>
                       <TableHead>手机号</TableHead>
                       <TableHead>业务类型</TableHead>
                       <TableHead>项目</TableHead>
                       <TableHead>班次类别</TableHead>
                       <TableHead>收款</TableHead>
                       <TableHead>折后业绩</TableHead>
-                      <TableHead>尾款</TableHead>
                       <TableHead>对接老师</TableHead>
+                      <TableHead>尾款</TableHead>
                       <TableHead>是否签约</TableHead>
                       <TableHead>是否回款</TableHead>
+                      <TableHead>备注</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={13} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={15} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
                     ) : orders.length === 0 ? (
-                      <TableRow><TableCell colSpan={13} className="text-center py-12 text-muted-foreground">暂无数据</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={15} className="text-center py-12 text-muted-foreground">暂无数据</TableCell></TableRow>
                     ) : orders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt)}</TableCell>
                         <TableCell className="font-medium">{order.studentName}</TableCell>
+                        <TableCell className="font-mono text-xs whitespace-nowrap">{order.idCard || '-'}</TableCell>
                         <TableCell>{order.phone}</TableCell>
                         <TableCell><Badge variant="outline">{order.businessType || '-'}</Badge></TableCell>
                         <TableCell>{order.examProject || '-'}</TableCell>
                         <TableCell>{order.classMajor || '-'}</TableCell>
                         <TableCell className="font-mono">¥{order.actualPayment.toFixed(2)}</TableCell>
                         <TableCell className="font-mono">¥{order.discountedPrice.toFixed(2)}</TableCell>
-                        <TableCell className={`font-mono ${order.remainingAmount > 0 ? 'text-red-600' : ''}`}>¥{order.remainingAmount.toFixed(2)}</TableCell>
                         <TableCell>{order.personInCharge}{order.team ? ` (${order.team})` : ''}</TableCell>
+                        <TableCell className={`font-mono ${order.remainingAmount > 0 ? 'text-red-600' : ''}`}>¥{order.remainingAmount.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge className={order.isSigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
                             {order.isSigned ? '已签约' : '未签约'}
@@ -355,6 +358,7 @@ const AdminDashboardPage = () => {
                             {order.isPaid ? '已回款' : '未回款'}
                           </Badge>
                         </TableCell>
+                        <TableCell className="max-w-[150px] truncate" title={order.remark || ''}>{order.remark || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" title="查看" onClick={() => viewDetail(order.id)}>
