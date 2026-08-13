@@ -59,6 +59,12 @@ export async function exportOrders(
   return request<{ items: TrainingOrder[] }>(`/api/training-orders/export/all${buildQuery(params)}`);
 }
 
+export async function exportMyOrders(
+  params: Partial<TrainingOrderExportParams>,
+): Promise<{ items: TrainingOrder[] }> {
+  return request<{ items: TrainingOrder[] }>(`/api/training-orders/export/mine${buildQuery(params)}`);
+}
+
 export async function getStats(params?: {
   startDate?: string;
   endDate?: string;

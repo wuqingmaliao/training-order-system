@@ -74,7 +74,7 @@ const LandingPage = () => {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-3">
             <FileText className="size-6 text-primary" />
           </div>
-          <h1 className="text-xl font-bold text-foreground">培训订单管理系统</h1>
+          <h1 className="text-xl font-bold text-foreground">筑一教育</h1>
           <p className="text-muted-foreground text-sm mt-1">员工登录</p>
         </CardHeader>
         <CardContent className="pt-4">

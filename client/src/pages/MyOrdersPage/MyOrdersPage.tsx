@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   FileText, Plus, LogOut, Eye, Search,
-  ChevronLeft, ChevronRight, User, KeyRound,
+  ChevronLeft, ChevronRight, User, KeyRound, Download,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';
@@ -82,6 +83,37 @@ const MyOrdersPage = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const res = await trainingOrders.exportMyOrders({
+        keyword: keyword || undefined,
+      });
+      const exportData = res.items.map(o => ({
+        '时间': formatDate(o.createdAt),
+        '学员姓名': o.studentName,
+        '身份证号': o.idCard,
+        '手机号': o.phone,
+        '业务类型': o.businessType,
+        '项目': o.examProject,
+        '班次类别': o.classMajor,
+        '收款（元）': o.actualPayment,
+        '折后业绩（元）': o.discountedPrice,
+        '尾款（元）': o.remainingAmount,
+        '对接老师': o.personInCharge,
+        '是否签约': o.isSigned ? '是' : '否',
+        '是否回款': o.isPaid ? '是' : '否',
+        '备注': o.remark,
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '我的订单');
+      XLSX.writeFile(wb, `我的订单_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      toast(`已导出 ${res.items.length} 条订单`);
+    } catch (error: any) {
+      toast(error?.message || '导出失败');
+    }
+  };
+
   const totalPages = Math.ceil(total / pageSize);
 
   return (
@@ -116,14 +148,19 @@ const MyOrdersPage = () => {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">订单列表 <span className="text-sm font-normal text-muted-foreground">({total}条)</span></CardTitle>
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索姓名/电话/身份证号"
-                  className="pl-9"
-                  value={keyword}
-                  onChange={(e) => { setPage(1); setKeyword(e.target.value); }}
-                />
+              <div className="flex items-center gap-2">
+                <div className="relative w-64">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                  <Input
+                    placeholder="搜索姓名/电话/身份证号"
+                    className="pl-9"
+                    value={keyword}
+                    onChange={(e) => { setPage(1); setKeyword(e.target.value); }}
+                  />
+                </div>
+                <Button variant="outline" size="sm" onClick={handleExport}>
+                  <Download className="size-4 mr-1" /> 导出
+                </Button>
               </div>
             </div>
           </CardHeader>

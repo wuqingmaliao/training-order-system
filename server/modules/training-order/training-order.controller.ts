@@ -77,6 +77,21 @@ export class TrainingOrderController {
     return { items };
   }
 
+  @Get('export/mine')
+  async exportMine(
+    @Query() query: any,
+    @Req() req: Request,
+  ): Promise<{ items: TrainingOrder[] }> {
+    const params: TrainingOrderExportParams = {
+      keyword: query.keyword,
+      businessType: query.businessType,
+      startDate: query.startDate,
+      endDate: query.endDate,
+    };
+    const items = await this.trainingOrderService.exportMyOrders(params, req.user!);
+    return { items };
+  }
+
   @Get('stats')
   @SetMetadata(ROLES_KEY, ['super_admin'])
   async getStats(

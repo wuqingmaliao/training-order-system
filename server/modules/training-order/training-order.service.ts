@@ -375,6 +375,45 @@ export class TrainingOrderService {
     return result.map(mapOrder);
   }
 
+  // 员工导出自己的订单
+  async exportMyOrders(params: TrainingOrderExportParams, currentUser: TokenPayload): Promise<TrainingOrder[]> {
+    const conditions: (SQL | undefined)[] = [eq(trainingOrder.userId, currentUser.userId)];
+
+    if (params.keyword) {
+      const kw = `%${params.keyword}%`;
+      conditions.push(
+        or(
+          like(trainingOrder.studentName, kw),
+          like(trainingOrder.phone, kw),
+          like(trainingOrder.idCard, kw),
+        )!,
+      );
+    }
+    if (params.businessType) {
+      conditions.push(eq(trainingOrder.businessType, params.businessType));
+    }
+    if (params.startDate) {
+      const start = new Date(params.startDate);
+      start.setHours(0, 0, 0, 0);
+      conditions.push(gte(trainingOrder.createdAt, start));
+    }
+    if (params.endDate) {
+      const end = new Date(params.endDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(trainingOrder.createdAt, end));
+    }
+
+    const where = and(...conditions);
+    const result = await $await<any[]>(
+      this.db
+        .select()
+        .from(trainingOrder)
+        .where(where)
+        .orderBy(desc(trainingOrder.createdAt))
+    );
+    return result.map(mapOrder);
+  }
+
   // 只有超管可以看统计
   async getStats(params: { startDate?: string; endDate?: string; userId?: string }, currentUser: TokenPayload): Promise<OrderStats> {
     if (currentUser.role !== 'super_admin') {
