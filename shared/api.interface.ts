@@ -93,6 +93,7 @@ export interface TrainingOrderListItem {
   isSigned: boolean;
   isPaid: boolean;
   studentName: string;
+  idCard: string;
   phone: string;
   examProject: string;
   classMajor: string;
@@ -100,6 +101,7 @@ export interface TrainingOrderListItem {
   discountedPrice: number;
   remainingAmount: number;
   personInCharge: string;
+  remark: string;
   userId: string | null;
   createdByName: string;
   team?: string;
