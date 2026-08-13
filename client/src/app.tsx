@@ -1,5 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
 import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage/LandingPage';
@@ -44,35 +43,32 @@ const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Toaster position="top-center" richColors />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={
-            <LoginGuard>
-              <LandingPage />
-            </LoginGuard>
-          } />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="my-customers" element={
-            <RequireAuth>
-              <MyOrdersPage />
-            </RequireAuth>
-          } />
-          <Route path="admin/login" element={
-            <LoginGuard>
-              <AdminLoginPage />
-            </LoginGuard>
-          } />
-          <Route path="admin" element={
-            <RequireAdmin>
-              <AdminDashboardPage />
-            </RequireAdmin>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={
+          <LoginGuard>
+            <LandingPage />
+          </LoginGuard>
+        } />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="my-customers" element={
+          <RequireAuth>
+            <MyOrdersPage />
+          </RequireAuth>
+        } />
+        <Route path="admin/login" element={
+          <LoginGuard>
+            <AdminLoginPage />
+          </LoginGuard>
+        } />
+        <Route path="admin" element={
+          <RequireAdmin>
+            <AdminDashboardPage />
+          </RequireAdmin>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
   );
 }
 

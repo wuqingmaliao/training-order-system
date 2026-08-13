@@ -115,7 +115,7 @@ const OrderEditDialog = ({ open, onOpenChange, order, onSuccess }: OrderEditDial
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle>编辑订单 - {order?.orderNo}</DialogTitle>
+          <DialogTitle>编辑订单</DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[calc(90vh-140px)] px-6 pb-6">
           <Form {...form}>

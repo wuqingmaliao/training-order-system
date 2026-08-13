@@ -193,7 +193,6 @@ const AdminDashboardPage = () => {
         userId: filterUserId || undefined,
       });
       const exportData = res.items.map(o => ({
-        '订单号': o.orderNo,
         '时间': formatDate(o.createdAt),
         '学员姓名': o.studentName,
         '身份证号': o.idCard,
@@ -263,7 +262,7 @@ const AdminDashboardPage = () => {
                   <div className="relative w-56">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
-                      placeholder="搜索姓名/电话/订单号"
+                      placeholder="搜索姓名/电话/身份证号"
                       className="pl-9"
                       value={keyword}
                       onChange={(e) => { setPage(1); setKeyword(e.target.value); }}
@@ -314,7 +313,6 @@ const AdminDashboardPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>订单号</TableHead>
                       <TableHead>时间</TableHead>
                       <TableHead>学员姓名</TableHead>
                       <TableHead>手机号</TableHead>
@@ -325,19 +323,18 @@ const AdminDashboardPage = () => {
                       <TableHead>折后业绩</TableHead>
                       <TableHead>尾款</TableHead>
                       <TableHead>对接老师</TableHead>
-                      {isSuperAdmin && <TableHead>是否签约</TableHead>}
-                      {isSuperAdmin && <TableHead>是否回款</TableHead>}
+                      <TableHead>是否签约</TableHead>
+                      <TableHead>是否回款</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={isSuperAdmin ? 14 : 12} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={13} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
                     ) : orders.length === 0 ? (
-                      <TableRow><TableCell colSpan={isSuperAdmin ? 14 : 12} className="text-center py-12 text-muted-foreground">暂无数据</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={13} className="text-center py-12 text-muted-foreground">暂无数据</TableCell></TableRow>
                     ) : orders.map((order) => (
                       <TableRow key={order.id}>
-                        <TableCell className="font-mono text-xs">{order.orderNo}</TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt)}</TableCell>
                         <TableCell className="font-medium">{order.studentName}</TableCell>
                         <TableCell>{order.phone}</TableCell>
@@ -348,20 +345,16 @@ const AdminDashboardPage = () => {
                         <TableCell className="font-mono">¥{order.discountedPrice.toFixed(2)}</TableCell>
                         <TableCell className={`font-mono ${order.remainingAmount > 0 ? 'text-red-600' : ''}`}>¥{order.remainingAmount.toFixed(2)}</TableCell>
                         <TableCell>{order.personInCharge}{order.team ? ` (${order.team})` : ''}</TableCell>
-                        {isSuperAdmin && (
-                          <TableCell>
-                            <Badge className={order.isSigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                              {order.isSigned ? '已签约' : '未签约'}
-                            </Badge>
-                          </TableCell>
-                        )}
-                        {isSuperAdmin && (
-                          <TableCell>
-                            <Badge className={order.isPaid ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                              {order.isPaid ? '已回款' : '未回款'}
-                            </Badge>
-                          </TableCell>
-                        )}
+                        <TableCell>
+                          <Badge className={order.isSigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {order.isSigned ? '已签约' : '未签约'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={order.isPaid ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {order.isPaid ? '已回款' : '未回款'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" title="查看" onClick={() => viewDetail(order.id)}>
@@ -547,12 +540,11 @@ const AdminDashboardPage = () => {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>订单详情 - {detailOrder?.orderNo}</DialogTitle>
+            <DialogTitle>订单详情</DialogTitle>
           </DialogHeader>
           {detailOrder && (
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><span className="text-muted-foreground">时间：</span>{formatDate(detailOrder.createdAt)}</div>
-              <div><span className="text-muted-foreground">订单号：</span>{detailOrder.orderNo}</div>
               <div><span className="text-muted-foreground">学员姓名：</span>{detailOrder.studentName}</div>
               <div><span className="text-muted-foreground">手机号：</span>{detailOrder.phone}</div>
               <div><span className="text-muted-foreground">身份证号：</span>{detailOrder.idCard}</div>
@@ -563,12 +555,8 @@ const AdminDashboardPage = () => {
               <div><span className="text-muted-foreground">折后业绩：</span>¥{detailOrder.discountedPrice.toFixed(2)}</div>
               <div><span className="text-muted-foreground">尾款：</span>¥{detailOrder.remainingAmount.toFixed(2)}</div>
               <div><span className="text-muted-foreground">对接老师：</span>{detailOrder.personInCharge}</div>
-              {isSuperAdmin && (
-                <>
-                  <div><span className="text-muted-foreground">是否签约：</span>{detailOrder.isSigned ? '是' : '否'}</div>
-                  <div><span className="text-muted-foreground">是否回款：</span>{detailOrder.isPaid ? '是' : '否'}</div>
-                </>
-              )}
+              <div><span className="text-muted-foreground">是否签约：</span>{detailOrder.isSigned ? '是' : '否'}</div>
+              <div><span className="text-muted-foreground">是否回款：</span>{detailOrder.isPaid ? '是' : '否'}</div>
               <div className="col-span-2"><span className="text-muted-foreground">备注：</span>{detailOrder.remark || '-'}</div>
             </div>
           )}
