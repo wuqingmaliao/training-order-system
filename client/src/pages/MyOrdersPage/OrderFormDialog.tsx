@@ -57,6 +57,7 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess, defaultPersonInCharge 
   const [projectOptions, setProjectOptions] = useState<string[]>([]);
   const [classMajorOptions, setClassMajorOptions] = useState<string[]>([]);
   const [projectOpen, setProjectOpen] = useState(false);
+  const [classOpen, setClassOpen] = useState(false);
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -211,14 +212,45 @@ const OrderFormDialog = ({ open, onOpenChange, onSuccess, defaultPersonInCharge 
               <FormField
                 control={form.control} name="classMajor"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>班次类别 <span className="text-destructive">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="请选择班次" /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {classMajorOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={classOpen} onOpenChange={setClassOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn('w-full justify-between font-normal', !field.value && 'text-muted-foreground')}
+                          >
+                            {field.value || '请选择班次'}
+                            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="搜索班次..." />
+                          <CommandList>
+                            <CommandEmpty>未找到班次</CommandEmpty>
+                            <CommandGroup>
+                              {classMajorOptions.map(option => (
+                                <CommandItem
+                                  key={option}
+                                  value={option}
+                                  onSelect={() => {
+                                    field.onChange(option);
+                                    setClassOpen(false);
+                                  }}
+                                >
+                                  <Check className={cn('mr-2 size-4', field.value === option ? 'opacity-100' : 'opacity-0')} />
+                                  {option}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

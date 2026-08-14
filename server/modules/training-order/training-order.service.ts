@@ -233,6 +233,7 @@ export class TrainingOrderService {
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(trainingOrder)
+        .leftJoin(users, eq(trainingOrder.userId, users.id))
         .where(where)
     );
     const total = Number(countResult[0]?.count || 0);
