@@ -33,6 +33,8 @@ export const trainingOrder = sqliteTable('training_order', {
   discountedPrice: real('discounted_price').notNull().default(0),
   remainingAmount: real('remaining_amount').notNull().default(0),
   personInCharge: text('person_in_charge', { length: 100 }).notNull().default(''),
+  academicCoordinator: text('academic_coordinator', { length: 100 }).notNull().default(''),
+  materialStatus: text('material_status', { length: 50 }).notNull().default(''),
   signDate: text('sign_date'),
   promisedStudent: text('promised_student', { length: 100 }).notNull().default(''),
   referrer: text('referrer', { length: 100 }).notNull().default(''),

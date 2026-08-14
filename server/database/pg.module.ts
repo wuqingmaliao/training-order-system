@@ -75,6 +75,8 @@ async function initDatabase(db: PgDatabase) {
       discounted_price REAL NOT NULL DEFAULT 0,
       remaining_amount REAL NOT NULL DEFAULT 0,
       person_in_charge TEXT NOT NULL DEFAULT '',
+      academic_coordinator TEXT NOT NULL DEFAULT '',
+      material_status TEXT NOT NULL DEFAULT '',
       sign_date TEXT,
       promised_student TEXT NOT NULL DEFAULT '',
       referrer TEXT NOT NULL DEFAULT '',
@@ -108,6 +110,12 @@ async function initDatabase(db: PgDatabase) {
   if (!(await columnExists(db, 'users', 'team'))) {
     await db.execute(sql`ALTER TABLE users ADD COLUMN team TEXT NOT NULL DEFAULT ''`);
   }
+  if (!(await columnExists(db, 'training_order', 'academic_coordinator'))) {
+    await db.execute(sql`ALTER TABLE training_order ADD COLUMN academic_coordinator TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!(await columnExists(db, 'training_order', 'material_status'))) {
+    await db.execute(sql`ALTER TABLE training_order ADD COLUMN material_status TEXT NOT NULL DEFAULT ''`);
+  }
 
   // 修复旧表缺少 DEFAULT 值的 NOT NULL 列（线上旧表可能在建表时未设默认值）
   await db.execute(sql`ALTER TABLE training_order ALTER COLUMN training_type SET DEFAULT ''`);
@@ -124,6 +132,8 @@ async function initDatabase(db: PgDatabase) {
   await db.execute(sql`ALTER TABLE training_order ALTER COLUMN discounted_price SET DEFAULT 0`);
   await db.execute(sql`ALTER TABLE training_order ALTER COLUMN remaining_amount SET DEFAULT 0`);
   await db.execute(sql`ALTER TABLE training_order ALTER COLUMN person_in_charge SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN academic_coordinator SET DEFAULT ''`);
+  await db.execute(sql`ALTER TABLE training_order ALTER COLUMN material_status SET DEFAULT ''`);
   await db.execute(sql`ALTER TABLE training_order ALTER COLUMN created_by_name SET DEFAULT ''`);
 
   // 索引
@@ -174,6 +184,24 @@ async function initDatabase(db: PgDatabase) {
   if (settingResult.rows.length === 0) {
     await db.execute(sql`
       INSERT INTO system_settings (key, value) VALUES ('exam_project_options', ${JSON.stringify(DEFAULT_PROJECT_OPTIONS)})
+    `);
+  }
+
+  // 初始化班次选项
+  const DEFAULT_CLASS_OPTIONS = ['冲刺', '一般冲刺二班'];
+  const classSettingResult = await db.execute(sql`SELECT key FROM system_settings WHERE key = 'class_major_options' LIMIT 1`);
+  if (classSettingResult.rows.length === 0) {
+    await db.execute(sql`
+      INSERT INTO system_settings (key, value) VALUES ('class_major_options', ${JSON.stringify(DEFAULT_CLASS_OPTIONS)})
+    `);
+  }
+
+  // 初始化资料状态选项
+  const DEFAULT_MATERIAL_OPTIONS = ['未交', '已交', '审核中', '已通过', '已退回'];
+  const materialSettingResult = await db.execute(sql`SELECT key FROM system_settings WHERE key = 'material_status_options' LIMIT 1`);
+  if (materialSettingResult.rows.length === 0) {
+    await db.execute(sql`
+      INSERT INTO system_settings (key, value) VALUES ('material_status_options', ${JSON.stringify(DEFAULT_MATERIAL_OPTIONS)})
     `);
   }
 }

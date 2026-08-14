@@ -100,8 +100,11 @@ const MyOrdersPage = () => {
         '折后业绩（元）': o.discountedPrice,
         '尾款（元）': o.remainingAmount,
         '对接老师': o.personInCharge,
+        '团队': o.team || '',
         '是否签约': o.isSigned ? '是' : '否',
         '是否回款': o.isPaid ? '是' : '否',
+        '教务对接人': o.academicCoordinator || '',
+        '资料状态': o.materialStatus || '',
         '备注': o.remark,
       }));
       const ws = XLSX.utils.json_to_sheet(exportData);
@@ -152,7 +155,7 @@ const MyOrdersPage = () => {
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
-                    placeholder="搜索姓名/电话/身份证号"
+                    placeholder="搜索全部"
                     className="pl-9"
                     value={keyword}
                     onChange={(e) => { setPage(1); setKeyword(e.target.value); }}
@@ -178,19 +181,22 @@ const MyOrdersPage = () => {
                   <TableHead>收款</TableHead>
                   <TableHead>折后业绩</TableHead>
                   <TableHead>对接老师</TableHead>
+                  <TableHead>团队</TableHead>
                   <TableHead>尾款</TableHead>
                   <TableHead>是否签约</TableHead>
                   <TableHead>是否回款</TableHead>
+                  <TableHead>教务对接人</TableHead>
+                  <TableHead>资料状态</TableHead>
                   <TableHead>备注</TableHead>
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={15} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={18} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
                 ) : orders.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={15} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={18} className="text-center py-12 text-muted-foreground">
                       <p className="mb-2">暂无订单数据</p>
                       <Button size="sm" variant="outline" onClick={() => setFormOpen(true)}>
                         <Plus className="size-4 mr-1" /> 新增第一个订单
@@ -209,6 +215,7 @@ const MyOrdersPage = () => {
                     <TableCell className="font-mono">¥{order.actualPayment.toFixed(2)}</TableCell>
                     <TableCell className="font-mono">¥{order.discountedPrice.toFixed(2)}</TableCell>
                     <TableCell>{order.personInCharge || '-'}</TableCell>
+                    <TableCell>{order.team || '-'}</TableCell>
                     <TableCell className={`font-mono ${order.remainingAmount > 0 ? 'text-red-600' : ''}`}>
                       ¥{order.remainingAmount.toFixed(2)}
                     </TableCell>
@@ -221,6 +228,12 @@ const MyOrdersPage = () => {
                       <Badge className={order.isPaid ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
                         {order.isPaid ? '已回款' : '未回款'}
                       </Badge>
+                    </TableCell>
+                    <TableCell>{order.academicCoordinator || '-'}</TableCell>
+                    <TableCell>
+                      {order.materialStatus ? (
+                        <Badge variant="outline">{order.materialStatus}</Badge>
+                      ) : '-'}
                     </TableCell>
                     <TableCell className="max-w-[150px] truncate" title={order.remark || ''}>{order.remark || '-'}</TableCell>
                     <TableCell className="text-right">
@@ -255,6 +268,7 @@ const MyOrdersPage = () => {
         open={formOpen}
         onOpenChange={setFormOpen}
         onSuccess={loadOrders}
+        defaultPersonInCharge={user?.realName || user?.username || ''}
       />
 
       <ChangePasswordDialog open={pwdOpen} onOpenChange={setPwdOpen} />
@@ -278,8 +292,11 @@ const MyOrdersPage = () => {
               <div><span className="text-muted-foreground">折后业绩：</span>¥{detailOrder.discountedPrice.toFixed(2)}</div>
               <div><span className="text-muted-foreground">尾款：</span>¥{detailOrder.remainingAmount.toFixed(2)}</div>
               <div><span className="text-muted-foreground">对接老师：</span>{detailOrder.personInCharge || '-'}</div>
+              <div><span className="text-muted-foreground">团队：</span>{detailOrder.team || '-'}</div>
               <div><span className="text-muted-foreground">是否签约：</span>{detailOrder.isSigned ? '是' : '否'}</div>
               <div><span className="text-muted-foreground">是否回款：</span>{detailOrder.isPaid ? '是' : '否'}</div>
+              <div><span className="text-muted-foreground">教务对接人：</span>{detailOrder.academicCoordinator || '-'}</div>
+              <div><span className="text-muted-foreground">资料状态：</span>{detailOrder.materialStatus || '-'}</div>
               <div className="col-span-2"><span className="text-muted-foreground">备注：</span>{detailOrder.remark || '-'}</div>
             </div>
           )}

@@ -33,6 +33,8 @@ export const trainingOrder = pgTable('training_order', {
   discountedPrice: real('discounted_price').notNull().default(0),
   remainingAmount: real('remaining_amount').notNull().default(0),
   personInCharge: text('person_in_charge').notNull().default(''),
+  academicCoordinator: text('academic_coordinator').notNull().default(''),
+  materialStatus: text('material_status').notNull().default(''),
   signDate: text('sign_date'),
   promisedStudent: text('promised_student').notNull().default(''),
   referrer: text('referrer').notNull().default(''),

@@ -83,3 +83,25 @@ export async function updateProjectOptions(options: string[]): Promise<ProjectOp
     body: JSON.stringify({ options }),
   });
 }
+
+export async function getClassMajorOptions(): Promise<ProjectOptionsResponse> {
+  return request<ProjectOptionsResponse>('/api/training-orders/class-major-options');
+}
+
+export async function updateClassMajorOptions(options: string[]): Promise<ProjectOptionsResponse> {
+  return request<ProjectOptionsResponse>('/api/training-orders/class-major-options', {
+    method: 'PUT',
+    body: JSON.stringify({ options }),
+  });
+}
+
+export async function getMaterialStatusOptions(): Promise<ProjectOptionsResponse> {
+  return request<ProjectOptionsResponse>('/api/training-orders/material-status-options');
+}
+
+export async function updateMaterialStatusOptions(options: string[]): Promise<ProjectOptionsResponse> {
+  return request<ProjectOptionsResponse>('/api/training-orders/material-status-options', {
+    method: 'PUT',
+    body: JSON.stringify({ options }),
+  });
+}

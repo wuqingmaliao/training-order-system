@@ -77,11 +77,14 @@ export interface TrainingOrder {
   discountedPrice: number;
   remainingAmount: number;
   personInCharge: string;
+  academicCoordinator: string;
+  materialStatus: string;
   signDate: string | null;
   promisedStudent: string;
   referrer: string;
   userId: string | null;
   createdByName: string;
+  team?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -101,6 +104,8 @@ export interface TrainingOrderListItem {
   discountedPrice: number;
   remainingAmount: number;
   personInCharge: string;
+  academicCoordinator: string;
+  materialStatus: string;
   remark: string;
   userId: string | null;
   createdByName: string;
@@ -125,6 +130,8 @@ export interface UpdateTrainingOrderRequest extends Partial<CreateTrainingOrderR
   isSigned?: boolean;
   isPaid?: boolean;
   personInCharge?: string;
+  academicCoordinator?: string;
+  materialStatus?: string;
   createdAt?: string;
 }
 
@@ -187,11 +194,13 @@ export interface StaffOrderStats {
   team?: string;
   orderCount: number;
   totalPayment: number;
+  totalDiscounted: number;
 }
 
 export interface OrderStats {
   totalOrders: number;
   totalActualPayment: number;
+  totalDiscounted: number;
   totalRemaining: number;
   todayOrders: number;
   todayPayment: number;

@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { and, eq, like, or, gte, lte, sql, desc, inArray, SQL } from 'drizzle-orm';
+import { and, eq, like, or, gte, lte, sql, desc, inArray, getTableColumns, type SQL } from 'drizzle-orm';
 import { trainingOrder, users, systemSettings } from '../../database/schema';
 import { DB_TOKEN } from '../../database/token';
 import { $await } from '../../database/db-helper';
@@ -16,6 +16,11 @@ import type {
   ProjectOptionsResponse,
 } from '@shared/api.interface';
 import type { TokenPayload } from '../../common/auth';
+
+function maskPhone(phone: string): string {
+  if (!phone || phone.length < 7) return phone;
+  return phone.slice(0, 3) + '****' + phone.slice(-4);
+}
 
 function mapOrder(o: any): TrainingOrder {
   return {
@@ -38,17 +43,20 @@ function mapOrder(o: any): TrainingOrder {
     discountedPrice: o.discountedPrice ?? 0,
     remainingAmount: o.remainingAmount ?? 0,
     personInCharge: o.personInCharge || '',
+    academicCoordinator: o.academicCoordinator || '',
+    materialStatus: o.materialStatus || '',
     signDate: o.signDate ?? null,
     promisedStudent: o.promisedStudent || '',
     referrer: o.referrer || '',
     userId: o.userId ?? null,
     createdByName: o.createdByName || '',
+    team: o.team || '',
     createdAt: o.createdAt instanceof Date ? o.createdAt.toISOString() : new Date(o.createdAt).toISOString(),
     updatedAt: o.updatedAt instanceof Date ? o.updatedAt.toISOString() : new Date(o.updatedAt).toISOString(),
   };
 }
 
-function mapOrderListItem(o: any): TrainingOrderListItem {
+function mapOrderListItem(o: any, maskPhoneNum = false): TrainingOrderListItem {
   return {
     id: o.id,
     orderNo: o.orderNo,
@@ -57,13 +65,15 @@ function mapOrderListItem(o: any): TrainingOrderListItem {
     isPaid: !!o.isPaid,
     studentName: o.studentName,
     idCard: o.idCard || '',
-    phone: o.phone || '',
+    phone: maskPhoneNum ? maskPhone(o.phone || '') : (o.phone || ''),
     examProject: o.examProject || '',
     classMajor: o.classMajor || '',
     actualPayment: o.actualPayment ?? 0,
     discountedPrice: o.discountedPrice ?? 0,
     remainingAmount: o.remainingAmount ?? 0,
     personInCharge: o.personInCharge || '',
+    academicCoordinator: o.academicCoordinator || '',
+    materialStatus: o.materialStatus || '',
     remark: o.remark || '',
     userId: o.userId ?? null,
     createdByName: o.createdByName || '',
@@ -144,6 +154,8 @@ export class TrainingOrderService {
           discountedPrice: Number(data.discountedPrice) || 0,
           remainingAmount: Number(data.remainingAmount) || 0,
           personInCharge: currentUser.realName,
+          academicCoordinator: '',
+          materialStatus: '',
           userId: currentUser.userId,
           createdByName: currentUser.realName,
           createdAt: now,
@@ -172,6 +184,16 @@ export class TrainingOrderService {
           like(trainingOrder.phone, kw),
           like(trainingOrder.orderNo, kw),
           like(trainingOrder.idCard, kw),
+          like(trainingOrder.businessType, kw),
+          like(trainingOrder.examProject, kw),
+          like(trainingOrder.classMajor, kw),
+          like(trainingOrder.personInCharge, kw),
+          like(trainingOrder.academicCoordinator, kw),
+          like(trainingOrder.materialStatus, kw),
+          like(trainingOrder.remark, kw),
+          like(trainingOrder.createdByName, kw),
+          like(users.team, kw),
+          like(users.realName, kw),
         )!,
       );
     }
@@ -234,6 +256,8 @@ export class TrainingOrderService {
           discountedPrice: trainingOrder.discountedPrice,
           remainingAmount: trainingOrder.remainingAmount,
           personInCharge: trainingOrder.personInCharge,
+          academicCoordinator: trainingOrder.academicCoordinator,
+          materialStatus: trainingOrder.materialStatus,
           remark: trainingOrder.remark,
           userId: trainingOrder.userId,
           createdByName: trainingOrder.createdByName,
@@ -248,8 +272,9 @@ export class TrainingOrderService {
         .offset(offset)
     );
 
+    const maskPhoneNum = currentUser.role === 'admin';
     return {
-      items: list.map(mapOrderListItem),
+      items: list.map(o => mapOrderListItem(o, maskPhoneNum)),
       total,
       page: params.page,
       pageSize: params.pageSize,
@@ -259,8 +284,12 @@ export class TrainingOrderService {
   async getOrderDetail(id: string, currentUser: TokenPayload): Promise<TrainingOrder> {
     const result = await $await<any[]>(
       this.db
-        .select()
+        .select({
+          ...getTableColumns(trainingOrder),
+          team: users.team,
+        })
         .from(trainingOrder)
+        .leftJoin(users, eq(trainingOrder.userId, users.id))
         .where(eq(trainingOrder.id, id))
         .limit(1)
     );
@@ -279,10 +308,10 @@ export class TrainingOrderService {
     return mapOrder(order);
   }
 
-  // 只有超管可以修改订单
+  // 超管可改全部字段，普通管理员只能改教务对接人和资料状态
   async updateOrder(id: string, data: UpdateTrainingOrderRequest, currentUser: TokenPayload): Promise<TrainingOrder> {
-    if (currentUser.role !== 'super_admin') {
-      throw new ForbiddenException('只有超级管理员可以修改订单');
+    if (currentUser.role !== 'super_admin' && currentUser.role !== 'admin') {
+      throw new ForbiddenException('无权修改订单');
     }
 
     const existing = await $await<any[]>(
@@ -301,20 +330,29 @@ export class TrainingOrderService {
       updatedAt: new Date(),
     };
 
-    if (data.studentName !== undefined) updateData.studentName = data.studentName.trim();
-    if (data.idCard !== undefined) updateData.idCard = data.idCard.trim();
-    if (data.phone !== undefined) updateData.phone = data.phone.trim();
-    if (data.businessType !== undefined) updateData.businessType = data.businessType;
-    if (data.examProject !== undefined) updateData.examProject = data.examProject;
-    if (data.classMajor !== undefined) updateData.classMajor = data.classMajor.trim();
-    if (data.actualPayment !== undefined) updateData.actualPayment = Number(data.actualPayment) || 0;
-    if (data.discountedPrice !== undefined) updateData.discountedPrice = Number(data.discountedPrice) || 0;
-    if (data.remainingAmount !== undefined) updateData.remainingAmount = Number(data.remainingAmount) || 0;
-    if (data.remark !== undefined) updateData.remark = data.remark || '';
-    if (data.personInCharge !== undefined) updateData.personInCharge = data.personInCharge;
-    if (data.isSigned !== undefined) updateData.isSigned = data.isSigned;
-    if (data.isPaid !== undefined) updateData.isPaid = data.isPaid;
-    if (data.createdAt !== undefined) updateData.createdAt = new Date(data.createdAt);
+    if (currentUser.role === 'admin') {
+      // 普通管理员只能改这两个字段
+      if (data.academicCoordinator !== undefined) updateData.academicCoordinator = data.academicCoordinator;
+      if (data.materialStatus !== undefined) updateData.materialStatus = data.materialStatus;
+    } else {
+      // 超管可改全部
+      if (data.studentName !== undefined) updateData.studentName = data.studentName.trim();
+      if (data.idCard !== undefined) updateData.idCard = data.idCard.trim();
+      if (data.phone !== undefined) updateData.phone = data.phone.trim();
+      if (data.businessType !== undefined) updateData.businessType = data.businessType;
+      if (data.examProject !== undefined) updateData.examProject = data.examProject;
+      if (data.classMajor !== undefined) updateData.classMajor = data.classMajor.trim();
+      if (data.actualPayment !== undefined) updateData.actualPayment = Number(data.actualPayment) || 0;
+      if (data.discountedPrice !== undefined) updateData.discountedPrice = Number(data.discountedPrice) || 0;
+      if (data.remainingAmount !== undefined) updateData.remainingAmount = Number(data.remainingAmount) || 0;
+      if (data.remark !== undefined) updateData.remark = data.remark || '';
+      if (data.personInCharge !== undefined) updateData.personInCharge = data.personInCharge;
+      if (data.academicCoordinator !== undefined) updateData.academicCoordinator = data.academicCoordinator;
+      if (data.materialStatus !== undefined) updateData.materialStatus = data.materialStatus;
+      if (data.isSigned !== undefined) updateData.isSigned = data.isSigned;
+      if (data.isPaid !== undefined) updateData.isPaid = data.isPaid;
+      if (data.createdAt !== undefined) updateData.createdAt = new Date(data.createdAt);
+    }
 
     await $await(
       this.db
@@ -372,6 +410,7 @@ export class TrainingOrderService {
       this.db
         .select()
         .from(trainingOrder)
+        .leftJoin(users, eq(trainingOrder.userId, users.id))
         .where(where)
         .orderBy(desc(trainingOrder.createdAt))
     );
@@ -389,7 +428,16 @@ export class TrainingOrderService {
         or(
           like(trainingOrder.studentName, kw),
           like(trainingOrder.phone, kw),
+          like(trainingOrder.orderNo, kw),
           like(trainingOrder.idCard, kw),
+          like(trainingOrder.businessType, kw),
+          like(trainingOrder.examProject, kw),
+          like(trainingOrder.classMajor, kw),
+          like(trainingOrder.personInCharge, kw),
+          like(trainingOrder.academicCoordinator, kw),
+          like(trainingOrder.materialStatus, kw),
+          like(trainingOrder.remark, kw),
+          like(trainingOrder.createdByName, kw),
         )!,
       );
     }
@@ -446,6 +494,7 @@ export class TrainingOrderService {
       this.db
         .select({
           actualPayment: trainingOrder.actualPayment,
+          discountedPrice: trainingOrder.discountedPrice,
           remainingAmount: trainingOrder.remainingAmount,
           userId: trainingOrder.userId,
           createdByName: trainingOrder.createdByName,
@@ -457,6 +506,7 @@ export class TrainingOrderService {
 
     const totalOrders = allOrders.length;
     const totalActualPayment = allOrders.reduce((sum, o) => sum + (Number(o.actualPayment) || 0), 0);
+    const totalDiscounted = allOrders.reduce((sum, o) => sum + (Number(o.discountedPrice) || 0), 0);
     const totalRemaining = allOrders.reduce((sum, o) => sum + (Number(o.remainingAmount) || 0), 0);
 
     const now = new Date();
@@ -476,11 +526,13 @@ export class TrainingOrderService {
           realName: o.createdByName || '未知',
           orderCount: 0,
           totalPayment: 0,
+          totalDiscounted: 0,
         });
       }
       const s = staffMap.get(key)!;
       s.orderCount++;
       s.totalPayment += Number(o.actualPayment) || 0;
+      s.totalDiscounted += Number(o.discountedPrice) || 0;
     }
 
     // 获取员工team信息
@@ -506,6 +558,7 @@ export class TrainingOrderService {
     return {
       totalOrders,
       totalActualPayment,
+      totalDiscounted,
       totalRemaining,
       todayOrders: todayOrders.length,
       todayPayment: todayOrders.reduce((sum, o) => sum + (Number(o.actualPayment) || 0), 0),
@@ -515,13 +568,13 @@ export class TrainingOrderService {
     };
   }
 
-  // 项目选项管理
-  async getProjectOptions(): Promise<ProjectOptionsResponse> {
+  // 通用选项获取
+  async getOptions(key: string): Promise<ProjectOptionsResponse> {
     const result = await $await<any[]>(
       this.db
         .select()
         .from(systemSettings)
-        .where(eq(systemSettings.key, 'exam_project_options'))
+        .where(eq(systemSettings.key, key))
         .limit(1)
     );
 
@@ -536,9 +589,9 @@ export class TrainingOrderService {
     }
   }
 
-  async updateProjectOptions(options: string[], currentUser: TokenPayload): Promise<ProjectOptionsResponse> {
+  async updateOptions(key: string, options: string[], currentUser: TokenPayload): Promise<ProjectOptionsResponse> {
     if (currentUser.role !== 'super_admin') {
-      throw new ForbiddenException('只有超级管理员可以管理项目选项');
+      throw new ForbiddenException('只有超级管理员可以管理选项');
     }
 
     const value = JSON.stringify(options);
@@ -547,7 +600,7 @@ export class TrainingOrderService {
       this.db
         .select()
         .from(systemSettings)
-        .where(eq(systemSettings.key, 'exam_project_options'))
+        .where(eq(systemSettings.key, key))
         .limit(1)
     );
 
@@ -555,17 +608,26 @@ export class TrainingOrderService {
       await $await(
         this.db
           .insert(systemSettings)
-          .values({ key: 'exam_project_options', value })
+          .values({ key, value })
       );
     } else {
       await $await(
         this.db
           .update(systemSettings)
           .set({ value })
-          .where(eq(systemSettings.key, 'exam_project_options'))
+          .where(eq(systemSettings.key, key))
       );
     }
 
     return { options };
+  }
+
+  // 项目选项管理（保留兼容）
+  async getProjectOptions(): Promise<ProjectOptionsResponse> {
+    return this.getOptions('exam_project_options');
+  }
+
+  async updateProjectOptions(options: string[], currentUser: TokenPayload): Promise<ProjectOptionsResponse> {
+    return this.updateOptions('exam_project_options', options, currentUser);
   }
 }

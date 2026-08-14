@@ -119,6 +119,34 @@ export class TrainingOrderController {
     return this.trainingOrderService.updateProjectOptions(body.options || [], req.user!);
   }
 
+  @Get('class-major-options')
+  async getClassMajorOptions(): Promise<ProjectOptionsResponse> {
+    return this.trainingOrderService.getOptions('class_major_options');
+  }
+
+  @Put('class-major-options')
+  @SetMetadata(ROLES_KEY, ['super_admin'])
+  async updateClassMajorOptions(
+    @Body() body: { options: string[] },
+    @Req() req: Request,
+  ): Promise<ProjectOptionsResponse> {
+    return this.trainingOrderService.updateOptions('class_major_options', body.options || [], req.user!);
+  }
+
+  @Get('material-status-options')
+  async getMaterialStatusOptions(): Promise<ProjectOptionsResponse> {
+    return this.trainingOrderService.getOptions('material_status_options');
+  }
+
+  @Put('material-status-options')
+  @SetMetadata(ROLES_KEY, ['super_admin'])
+  async updateMaterialStatusOptions(
+    @Body() body: { options: string[] },
+    @Req() req: Request,
+  ): Promise<ProjectOptionsResponse> {
+    return this.trainingOrderService.updateOptions('material_status_options', body.options || [], req.user!);
+  }
+
   @Get(':id')
   async getDetail(
     @Param('id') id: string,
@@ -128,7 +156,7 @@ export class TrainingOrderController {
   }
 
   @Put(':id')
-  @SetMetadata(ROLES_KEY, ['super_admin'])
+  @SetMetadata(ROLES_KEY, ['super_admin', 'admin'])
   async update(
     @Param('id') id: string,
     @Body() body: UpdateTrainingOrderRequest,

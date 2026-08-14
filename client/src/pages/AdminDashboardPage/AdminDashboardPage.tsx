@@ -31,6 +31,7 @@ import type {
 } from '@shared/api.interface';
 import { toast } from 'sonner';
 import OrderEditDialog from './OrderEditDialog';
+import AdminEditDialog from './AdminEditDialog';
 import UserFormDialog from './UserFormDialog';
 import ProjectOptionsManager from './ProjectOptionsManager';
 import ChangePasswordDialog from '@client/src/components/ChangePasswordDialog';
@@ -66,6 +67,8 @@ const AdminDashboardPage = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [editOrder, setEditOrder] = useState<TrainingOrder | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [adminEditOrder, setAdminEditOrder] = useState<TrainingOrder | null>(null);
+  const [adminEditOpen, setAdminEditOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // 人员管理
@@ -161,6 +164,16 @@ const AdminDashboardPage = () => {
     }
   };
 
+  const handleAdminEdit = async (id: string) => {
+    try {
+      const order = await trainingOrders.getOrderDetail(id);
+      setAdminEditOrder(order);
+      setAdminEditOpen(true);
+    } catch {
+      toast('获取订单失败');
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
@@ -204,8 +217,11 @@ const AdminDashboardPage = () => {
         '折后业绩': o.discountedPrice,
         '尾款': o.remainingAmount,
         '对接老师': o.personInCharge,
+        '团队': o.team || '',
         '是否签约': o.isSigned ? '是' : '否',
         '是否回款': o.isPaid ? '是' : '否',
+        '教务对接人': o.academicCoordinator || '',
+        '资料状态': o.materialStatus || '',
         '备注': o.remark,
       }));
       const ws = XLSX.utils.json_to_sheet(exportData);
@@ -251,7 +267,7 @@ const AdminDashboardPage = () => {
             <TabsTrigger value="orders"><FileText className="size-4 mr-1" />订单管理</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="users"><Users className="size-4 mr-1" />人员管理</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="stats"><BarChart3 className="size-4 mr-1" />数据统计</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="settings"><Settings className="size-4 mr-1" />项目设置</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="settings"><Settings className="size-4 mr-1" />选项设置</TabsTrigger>}
           </TabsList>
 
           {/* 订单管理 */}
@@ -262,7 +278,7 @@ const AdminDashboardPage = () => {
                   <div className="relative w-56">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
-                      placeholder="搜索姓名/电话/身份证号"
+                      placeholder="搜索全部"
                       className="pl-9"
                       value={keyword}
                       onChange={(e) => { setPage(1); setKeyword(e.target.value); }}
@@ -323,30 +339,34 @@ const AdminDashboardPage = () => {
                       <TableHead>收款</TableHead>
                       <TableHead>折后业绩</TableHead>
                       <TableHead>对接老师</TableHead>
+                      <TableHead>团队</TableHead>
                       <TableHead>尾款</TableHead>
                       <TableHead>是否签约</TableHead>
                       <TableHead>是否回款</TableHead>
+                      <TableHead>教务对接人</TableHead>
+                      <TableHead>资料状态</TableHead>
                       <TableHead>备注</TableHead>
                       <TableHead className="text-right">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={15} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={18} className="text-center py-8 text-muted-foreground">加载中...</TableCell></TableRow>
                     ) : orders.length === 0 ? (
-                      <TableRow><TableCell colSpan={15} className="text-center py-12 text-muted-foreground">暂无数据</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={18} className="text-center py-12 text-muted-foreground">暂无数据</TableCell></TableRow>
                     ) : orders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{formatDate(order.createdAt)}</TableCell>
                         <TableCell className="font-medium">{order.studentName}</TableCell>
                         <TableCell className="font-mono text-xs whitespace-nowrap">{order.idCard || '-'}</TableCell>
-                        <TableCell>{order.phone}</TableCell>
+                        <TableCell className="font-mono">{order.phone}</TableCell>
                         <TableCell><Badge variant="outline">{order.businessType || '-'}</Badge></TableCell>
                         <TableCell>{order.examProject || '-'}</TableCell>
                         <TableCell>{order.classMajor || '-'}</TableCell>
                         <TableCell className="font-mono">¥{order.actualPayment.toFixed(2)}</TableCell>
                         <TableCell className="font-mono">¥{order.discountedPrice.toFixed(2)}</TableCell>
-                        <TableCell>{order.personInCharge}{order.team ? ` (${order.team})` : ''}</TableCell>
+                        <TableCell>{order.personInCharge || '-'}</TableCell>
+                        <TableCell>{order.team || '-'}</TableCell>
                         <TableCell className={`font-mono ${order.remainingAmount > 0 ? 'text-red-600' : ''}`}>¥{order.remainingAmount.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge className={order.isSigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
@@ -358,13 +378,19 @@ const AdminDashboardPage = () => {
                             {order.isPaid ? '已回款' : '未回款'}
                           </Badge>
                         </TableCell>
+                        <TableCell>{order.academicCoordinator || '-'}</TableCell>
+                        <TableCell>
+                          {order.materialStatus ? (
+                            <Badge variant="outline">{order.materialStatus}</Badge>
+                          ) : '-'}
+                        </TableCell>
                         <TableCell className="max-w-[150px] truncate" title={order.remark || ''}>{order.remark || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
                             <Button variant="ghost" size="icon" title="查看" onClick={() => viewDetail(order.id)}>
                               <Eye className="size-4" />
                             </Button>
-                            {isSuperAdmin && (
+                            {isSuperAdmin ? (
                               <>
                                 <Button variant="ghost" size="icon" title="编辑" onClick={() => handleEdit(order.id)}>
                                   <Edit2 className="size-4" />
@@ -373,6 +399,10 @@ const AdminDashboardPage = () => {
                                   <Trash2 className="size-4" />
                                 </Button>
                               </>
+                            ) : (
+                              <Button variant="ghost" size="icon" title="编辑教务信息" onClick={() => handleAdminEdit(order.id)}>
+                                <Edit2 className="size-4" />
+                              </Button>
                             )}
                           </div>
                         </TableCell>
@@ -437,7 +467,7 @@ const AdminDashboardPage = () => {
                           <TableCell>{u.team || '-'}</TableCell>
                           <TableCell>
                             <span className={u.isActive ? 'text-green-600' : 'text-muted-foreground'}>
-                              {u.isActive ? '正常' : '已禁用'}
+                              {u.isActive ? '正常' : '禁用'}
                             </span>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">{formatDate(u.createdAt)}</TableCell>
@@ -478,10 +508,18 @@ const AdminDashboardPage = () => {
                     </Card>
                     <Card>
                       <CardContent className="pt-6">
+                        <p className="text-sm text-muted-foreground">总折后业绩</p>
+                        <p className="text-2xl font-bold mt-1 text-blue-600">¥{stats.totalDiscounted.toFixed(2)}</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-6">
                         <p className="text-sm text-muted-foreground">总尾款</p>
                         <p className="text-2xl font-bold mt-1 text-red-600">¥{stats.totalRemaining.toFixed(2)}</p>
                       </CardContent>
                     </Card>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
                     <Card>
                       <CardContent className="pt-6">
                         <p className="text-sm text-muted-foreground">今日订单</p>
@@ -489,8 +527,6 @@ const AdminDashboardPage = () => {
                         <p className="text-xs text-muted-foreground mt-1">收款 ¥{stats.todayPayment.toFixed(2)}</p>
                       </CardContent>
                     </Card>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
                     <Card>
                       <CardContent className="pt-6">
                         <p className="text-sm text-muted-foreground">本月订单</p>
@@ -509,6 +545,7 @@ const AdminDashboardPage = () => {
                             <TableHead>团队</TableHead>
                             <TableHead>订单数</TableHead>
                             <TableHead>总收款</TableHead>
+                            <TableHead>折后业绩</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -518,6 +555,7 @@ const AdminDashboardPage = () => {
                               <TableCell>{s.team || '-'}</TableCell>
                               <TableCell>{s.orderCount}</TableCell>
                               <TableCell className="font-mono">¥{s.totalPayment.toFixed(2)}</TableCell>
+                              <TableCell className="font-mono text-blue-600">¥{s.totalDiscounted.toFixed(2)}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
@@ -531,7 +569,7 @@ const AdminDashboardPage = () => {
             </TabsContent>
           )}
 
-          {/* 项目设置（仅超管） */}
+          {/* 选项设置（仅超管） */}
           {isSuperAdmin && (
             <TabsContent value="settings">
               <ProjectOptionsManager />
@@ -559,20 +597,33 @@ const AdminDashboardPage = () => {
               <div><span className="text-muted-foreground">折后业绩：</span>¥{detailOrder.discountedPrice.toFixed(2)}</div>
               <div><span className="text-muted-foreground">尾款：</span>¥{detailOrder.remainingAmount.toFixed(2)}</div>
               <div><span className="text-muted-foreground">对接老师：</span>{detailOrder.personInCharge}</div>
+              <div><span className="text-muted-foreground">团队：</span>{detailOrder.team || '-'}</div>
               <div><span className="text-muted-foreground">是否签约：</span>{detailOrder.isSigned ? '是' : '否'}</div>
               <div><span className="text-muted-foreground">是否回款：</span>{detailOrder.isPaid ? '是' : '否'}</div>
+              <div><span className="text-muted-foreground">教务对接人：</span>{detailOrder.academicCoordinator || '-'}</div>
+              <div><span className="text-muted-foreground">资料状态：</span>{detailOrder.materialStatus || '-'}</div>
               <div className="col-span-2"><span className="text-muted-foreground">备注：</span>{detailOrder.remark || '-'}</div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* 编辑弹窗（仅超管） */}
+      {/* 超管编辑弹窗 */}
       {isSuperAdmin && (
         <OrderEditDialog
           open={editOpen}
           onOpenChange={setEditOpen}
           order={editOrder}
+          onSuccess={loadOrders}
+        />
+      )}
+
+      {/* 普通管理员编辑弹窗 */}
+      {!isSuperAdmin && (
+        <AdminEditDialog
+          open={adminEditOpen}
+          onOpenChange={setAdminEditOpen}
+          order={adminEditOrder}
           onSuccess={loadOrders}
         />
       )}

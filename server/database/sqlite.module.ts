@@ -49,6 +49,8 @@ sqlite.exec(`
     discounted_price REAL NOT NULL DEFAULT 0,
     remaining_amount REAL NOT NULL DEFAULT 0,
     person_in_charge TEXT NOT NULL DEFAULT '',
+    academic_coordinator TEXT NOT NULL DEFAULT '',
+    material_status TEXT NOT NULL DEFAULT '',
     sign_date TEXT,
     promised_student TEXT NOT NULL DEFAULT '',
     referrer TEXT NOT NULL DEFAULT '',
@@ -80,6 +82,12 @@ if (!orderColNames.includes('is_paid')) {
 }
 if (!orderColNames.includes('remark')) {
   sqlite.exec("ALTER TABLE training_order ADD COLUMN remark TEXT NOT NULL DEFAULT ''");
+}
+if (!orderColNames.includes('academic_coordinator')) {
+  sqlite.exec("ALTER TABLE training_order ADD COLUMN academic_coordinator TEXT NOT NULL DEFAULT ''");
+}
+if (!orderColNames.includes('material_status')) {
+  sqlite.exec("ALTER TABLE training_order ADD COLUMN material_status TEXT NOT NULL DEFAULT ''");
 }
 
 const userColumns = sqlite.prepare("PRAGMA table_info(users)").all() as { name: string }[];
@@ -138,6 +146,24 @@ const settingExists = sqlite.prepare("SELECT key FROM system_settings WHERE key 
 if (!settingExists) {
   sqlite.prepare("INSERT INTO system_settings (key, value) VALUES (?, ?)").run(
     'exam_project_options', JSON.stringify(DEFAULT_PROJECT_OPTIONS)
+  );
+}
+
+// 初始化班次选项
+const DEFAULT_CLASS_OPTIONS = ['冲刺', '一般冲刺二班'];
+const classSettingExists = sqlite.prepare("SELECT key FROM system_settings WHERE key = 'class_major_options'").get();
+if (!classSettingExists) {
+  sqlite.prepare("INSERT INTO system_settings (key, value) VALUES (?, ?)").run(
+    'class_major_options', JSON.stringify(DEFAULT_CLASS_OPTIONS)
+  );
+}
+
+// 初始化资料状态选项
+const DEFAULT_MATERIAL_OPTIONS = ['未交', '已交', '审核中', '已通过', '已退回'];
+const materialSettingExists = sqlite.prepare("SELECT key FROM system_settings WHERE key = 'material_status_options'").get();
+if (!materialSettingExists) {
+  sqlite.prepare("INSERT INTO system_settings (key, value) VALUES (?, ?)").run(
+    'material_status_options', JSON.stringify(DEFAULT_MATERIAL_OPTIONS)
   );
 }
 

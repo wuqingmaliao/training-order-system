@@ -4,22 +4,29 @@ import { Plus, X, Save, Loader2 } from 'lucide-react';
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@client/src/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@client/src/components/ui/tabs';
 import { trainingOrders } from '@client/src/api';
 import { toast } from 'sonner';
 
-const ProjectOptionsManager = () => {
+interface OptionGroupProps {
+  title: string;
+  loadOptions: () => Promise<{ options: string[] }>;
+  saveOptions: (options: string[]) => Promise<{ options: string[] }>;
+}
+
+const OptionGroup = ({ title, loadOptions, saveOptions }: OptionGroupProps) => {
   const [options, setOptions] = useState<string[]>([]);
   const [newOption, setNewOption] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    trainingOrders.getProjectOptions().then(res => {
+    loadOptions().then(res => {
       setOptions(res.options || []);
     }).catch(() => {
-      toast('加载项目选项失败');
+      toast(`加载${title}失败`);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [loadOptions, title]);
 
   const handleAdd = () => {
     const v = newOption.trim();
@@ -39,7 +46,7 @@ const ProjectOptionsManager = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await trainingOrders.updateProjectOptions(options);
+      await saveOptions(options);
       toast('保存成功');
     } catch (error: any) {
       toast(error?.message || '保存失败');
@@ -59,12 +66,12 @@ const ProjectOptionsManager = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">项目选项管理</CardTitle>
+        <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Input
-            placeholder="输入新项目名称"
+            placeholder="输入新选项"
             value={newOption}
             onChange={(e) => setNewOption(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
@@ -102,6 +109,39 @@ const ProjectOptionsManager = () => {
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const ProjectOptionsManager = () => {
+  return (
+    <Tabs defaultValue="project">
+      <TabsList>
+        <TabsTrigger value="project">项目选项</TabsTrigger>
+        <TabsTrigger value="class">班次选项</TabsTrigger>
+        <TabsTrigger value="material">资料状态</TabsTrigger>
+      </TabsList>
+      <TabsContent value="project" className="mt-4">
+        <OptionGroup
+          title="项目选项管理"
+          loadOptions={trainingOrders.getProjectOptions}
+          saveOptions={trainingOrders.updateProjectOptions}
+        />
+      </TabsContent>
+      <TabsContent value="class" className="mt-4">
+        <OptionGroup
+          title="班次选项管理"
+          loadOptions={trainingOrders.getClassMajorOptions}
+          saveOptions={trainingOrders.updateClassMajorOptions}
+        />
+      </TabsContent>
+      <TabsContent value="material" className="mt-4">
+        <OptionGroup
+          title="资料状态管理"
+          loadOptions={trainingOrders.getMaterialStatusOptions}
+          saveOptions={trainingOrders.updateMaterialStatusOptions}
+        />
+      </TabsContent>
+    </Tabs>
   );
 };
 
