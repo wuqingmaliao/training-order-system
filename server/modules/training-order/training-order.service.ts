@@ -409,7 +409,37 @@ export class TrainingOrderService {
 
     const result = await $await<any[]>(
       this.db
-        .select()
+        .select({
+          id: trainingOrder.id,
+          orderNo: trainingOrder.orderNo,
+          businessType: trainingOrder.businessType,
+          isSigned: trainingOrder.isSigned,
+          isPaid: trainingOrder.isPaid,
+          remark: trainingOrder.remark,
+          trainingType: trainingOrder.trainingType,
+          customerSource: trainingOrder.customerSource,
+          contractStatus: trainingOrder.contractStatus,
+          studentName: trainingOrder.studentName,
+          idCard: trainingOrder.idCard,
+          phone: trainingOrder.phone,
+          examProject: trainingOrder.examProject,
+          classMajor: trainingOrder.classMajor,
+          originalPrice: trainingOrder.originalPrice,
+          actualPayment: trainingOrder.actualPayment,
+          discountedPrice: trainingOrder.discountedPrice,
+          remainingAmount: trainingOrder.remainingAmount,
+          personInCharge: trainingOrder.personInCharge,
+          academicCoordinator: trainingOrder.academicCoordinator,
+          materialStatus: trainingOrder.materialStatus,
+          signDate: trainingOrder.signDate,
+          promisedStudent: trainingOrder.promisedStudent,
+          referrer: trainingOrder.referrer,
+          userId: trainingOrder.userId,
+          createdByName: trainingOrder.createdByName,
+          team: users.team,
+          createdAt: trainingOrder.createdAt,
+          updatedAt: trainingOrder.updatedAt,
+        })
         .from(trainingOrder)
         .leftJoin(users, eq(trainingOrder.userId, users.id))
         .where(where)
