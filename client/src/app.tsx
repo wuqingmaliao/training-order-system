@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import LandingPage from './pages/LandingPage/LandingPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import MyOrdersPage from './pages/MyOrdersPage/MyOrdersPage';
-import AdminLoginPage from './pages/AdminLoginPage/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage/AdminDashboardPage';
 import NotFound from './pages/NotFound/NotFound';
 import { authApi } from './api';
@@ -32,7 +31,7 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
 // 管理员页面守卫（super_admin 和 admin 都可以进入）
 const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
   if (!authApi.isLoggedIn()) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/" replace />;
   }
   const user = authApi.getCurrentUser();
   if (user?.role !== 'super_admin' && user?.role !== 'admin') {
@@ -55,11 +54,6 @@ function App() {
           <RequireAuth>
             <MyOrdersPage />
           </RequireAuth>
-        } />
-        <Route path="admin/login" element={
-          <LoginGuard>
-            <AdminLoginPage />
-          </LoginGuard>
         } />
         <Route path="admin" element={
           <RequireAdmin>

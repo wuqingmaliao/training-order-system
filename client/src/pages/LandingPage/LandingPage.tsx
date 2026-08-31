@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate, Link } from 'react-router-dom';
-import { Eye, EyeOff, User, Lock, FileText, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, User, Lock, FileText } from 'lucide-react';
 
 import { Button } from '@client/src/components/ui/button';
 import {
@@ -60,22 +60,13 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-background relative flex items-center justify-center p-4">
-      {/* 右上角管理员入口 */}
-      <Link
-        to="/admin/login"
-        className="absolute top-4 right-4 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-md hover:bg-accent"
-      >
-        <Shield className="size-4" />
-        管理员登录
-      </Link>
-
       <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 mb-3">
             <FileText className="size-6 text-primary" />
           </div>
           <h1 className="text-xl font-bold text-foreground">筑一教育</h1>
-          <p className="text-muted-foreground text-sm mt-1">员工登录</p>
+          <p className="text-muted-foreground text-sm mt-1">登录</p>
         </CardHeader>
         <CardContent className="pt-4">
           <Form {...form}>

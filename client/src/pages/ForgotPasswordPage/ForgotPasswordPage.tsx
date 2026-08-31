@@ -50,7 +50,7 @@ const ForgotPasswordPage = () => {
       });
       setSuccess(true);
       setTimeout(() => {
-        navigate(isAdmin ? '/admin/login' : '/login', { replace: true });
+        navigate('/', { replace: true });
       }, 2000);
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || '重置失败，请重试';
@@ -185,7 +185,7 @@ const ForgotPasswordPage = () => {
 
               <div className="text-center text-sm">
                 <Link
-                  to={isAdmin ? '/admin/login' : '/login'}
+                  to="/"
                   className="text-primary hover:underline"
                 >
                   返回登录

@@ -95,7 +95,7 @@ const AdminDashboardPage = () => {
     } catch (error: any) {
       if (error?.message?.includes('未授权')) {
         authApi.logout();
-        navigate('/admin/login');
+        navigate('/');
       }
     } finally {
       setLoading(false);
