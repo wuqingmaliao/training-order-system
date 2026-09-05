@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import * as express from 'express';
 import * as fs from 'fs';
@@ -63,6 +64,21 @@ async function bootstrap() {
     next();
   });
 
+  // 配置 Swagger 接口文档
+  const config = new DocumentBuilder()
+    .setTitle('筑一教育 - 培训订单管理系统 API')
+    .setDescription('培训订单管理系统后端接口文档')
+    .setVersion('1.0')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'x-auth-token')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
+  logger.log('接口文档: http://localhost:' + port + '/api/docs');
+
   const clientDir = findClientDir();
   logger.log(`静态文件目录: ${clientDir}`);
 
@@ -96,7 +112,8 @@ async function bootstrap() {
   await app.listen(port, host);
   logger.log(`Server running on ${host}:${port}`);
   logger.log(`订单填写: http://localhost:${port}`);
-  logger.log(`管理后台: http://localhost:${port}/admin/login`);
+  logger.log(`管理后台: http://localhost:${port}/admin`);
+  logger.log(`接口文档: http://localhost:${port}/api/docs`);
 
   // 优雅关闭：收到 Ctrl+C 或关闭窗口时，正确释放端口
   const shutdown = (signal: string) => {
