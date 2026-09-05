@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import express from 'express';
 import { VercelAppModule } from '../server/vercel-app.module';
 
 let cachedServer: any;
 let initError: any = null;
 
-// 捕获未处理的异步错误
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled Rejection:', reason);
 });
@@ -24,6 +24,21 @@ async function bootstrap() {
     const app = await NestFactory.create(VercelAppModule, new ExpressAdapter(expressApp), {
       logger: ['error', 'warn', 'log'],
     });
+
+    // 配置 Swagger 接口文档
+    const config = new DocumentBuilder()
+      .setTitle('筑一教育 - 培训订单管理系统 API')
+      .setDescription('培训订单管理系统后端接口文档')
+      .setVersion('1.0')
+      .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'x-auth-token')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+
     await app.init();
 
     cachedServer = expressApp;
